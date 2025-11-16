@@ -23,32 +23,33 @@ try {
     die("DB Error: " . $e->getMessage());
 }
 
-// --- Get Student Info ---
+// --- Get Student Info (using correct column names & joins) ---
 $stmt = $pdo->prepare("
     SELECT 
         s.fname, 
         s.lname, 
         s.stuid, 
-        sa.classid,
-        NULL AS pixpath  -- No photo table yet
+        c.classname AS classid,
+        NULL AS pixpath
     FROM users u
     JOIN students s ON u.id = s.user_id
     LEFT JOIN student_assignments sa ON s.id = sa.student_id 
         AND sa.session = (SELECT MAX(session) FROM student_assignments WHERE student_id = s.id)
+    LEFT JOIN classes c ON sa.class_id = c.id
     WHERE u.username = ?
 ");
 $stmt->execute([$username]);
 $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$student) {
-    die("Student not found. Check if username '$username' is linked to a student.");
+    die("Student not found. Check if '$username' exists in `users` and is linked to `students` via `user_id`.");
 }
 
 $fullName = $student['fname'] . ' ' . $student['lname'];
 $class = $student['classid'] ?? 'Not Assigned';
-$photo = 'assets/default-avatar.png';  // No photos yet
+$photo = 'assets/default-avatar.png'; // No pix table
 
-// --- Get Recent Grades ---
+// --- Get Recent Grades (using student_id, not stuid) ---
 $grades = $pdo->prepare("
     SELECT 
         sub.subname AS subject, 
@@ -61,10 +62,10 @@ $grades = $pdo->prepare("
     ORDER BY ar.session DESC, ar.term DESC 
     LIMIT 5
 ");
-$grades->execute([$student['id']]);
+$grades->execute([$student['id']]); // Use $student['id'] from students table
 $recentGrades = $grades->fetchAll(PDO::FETCH_ASSOC);
 
-// --- Get Student Tasks ---
+// --- Get Student Tasks (from tasks + role_tasks) ---
 $tasks = $pdo->query("
     SELECT t.taskid, t.taskname 
     FROM tasks t
@@ -223,6 +224,7 @@ $tasks = $pdo->query("
       });
     });
 
+    // Auto-load Profile on start
     document.querySelector('.task-link[data-id="profile"]')?.click();
   </script>
 
