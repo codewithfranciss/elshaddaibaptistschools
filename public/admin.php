@@ -170,7 +170,7 @@ $tasks = $pdo->query("
   <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="logo">
-      <img src="assets/logo.png" alt="School Logo">
+      <img src="img/EBC.png" alt="School Logo">
     </div>
     <div class="admin-info">
       <h3><?= htmlspecialchars($adminName) ?></h3>
