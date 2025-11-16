@@ -1,6 +1,6 @@
 <?php
-// create_user.php
-session_start();
+// create_user.php — DO NOT CALL session_start() AGAIN!
+// It's already started in admin.php
 
 // Security: Only admin
 if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'admin') {
@@ -26,31 +26,33 @@ $message = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
-    $role = $_POST['role'];
+    $username = trim($_POST['username'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $role = $_POST['role'] ?? '';
 
     // Validation
     if (empty($username) || empty($password) || empty($role)) {
         $message = "<p style='color:red;'>All fields are required.</p>";
     } elseif (!in_array($role, ['student', 'teacher', 'admin'])) {
-        $message = "<p style='color:red;'>Invalid role selected.</p>";
+        $message = "<p style='color:red;'>Invalid role.</p>";
     } else {
-        // Check if username already exists
+        // Check if username exists
         $check = $pdo->prepare("SELECT id FROM users WHERE username = ?");
         $check->execute([$username]);
         if ($check->fetch()) {
-            $message = "<p style='color:red;'>Username already exists.</p>";
+            $message = "<p style='color:red;'>Username <b>$username</b> already exists!</p>";
         } else {
-            // Insert into users table
+            // INSERT USER
             $stmt = $pdo->prepare("
                 INSERT INTO users (username, password, role, created_at) 
                 VALUES (?, ?, ?, NOW())
             ");
             if ($stmt->execute([$username, $password, $role])) {
-                $message = "<p style='color:green; font-weight:bold;'>User '$username' created successfully as $role!</p>";
+                $message = "<p style='color:green; font-weight:bold;'>User <b>$username</b> created as <b>$role</b>!</p>";
+                // DEBUG: Show SQL proof
+                $message .= "<p style='font-size:0.9rem; color:#555;'><em>Check DB → users table → new row added.</em></p>";
             } else {
-                $message = "<p style='color:red;'>Failed to create user.</p>";
+                $message = "<p style='color:red;'>Failed to insert into database.</p>";
             }
         }
     }
@@ -61,27 +63,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h2>Create New User</h2>
     
     <?php if ($message): ?>
-        <div style="margin:15px 0; padding:10px; border-radius:6px;">
+        <div style="margin:15px 0; padding:12px; border-radius:6px; background:#f0f0f0;">
             <?= $message ?>
         </div>
     <?php endif; ?>
 
     <form method="POST">
         <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" required 
-                   placeholder="e.g. tomiwa" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+            <label>Username</label>
+            <input type="text" name="username" required placeholder="e.g. john123" 
+                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
         </div>
 
         <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" required 
-                   placeholder="Enter secure password" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+            <label>Password</label>
+            <input type="password" name="password" required placeholder="Enter password" 
+                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
         </div>
 
         <div class="form-group">
-            <label for="role">Role</label>
-            <select id="role" name="role" required 
+            <label>Role</label>
+            <select name="role" required 
                     style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
                 <option value="">-- Select Role --</option>
                 <option value="student">Student</option>
@@ -90,18 +92,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </select>
         </div>
 
-        <button type="submit" class="btn" 
-                style="background:var(--green); color:white; padding:12px 24px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">
+        <button type="submit" class="btn">
             Create User
         </button>
     </form>
 
-    <div style="margin-top:30px; padding:15px; background:#f9f9f9; border-radius:6px; font-size:0.9rem;">
-        <p><strong>Tips:</strong></p>
-        <ul style="margin:10px 0; padding-left:20px;">
-            <li>Use strong passwords</li>
-            <li>Student/Teacher will need additional info later (in their modules)</li>
-            <li>Admin users get full access</li>
+    <div style="margin-top:25px; padding:15px; background:#f9f9f9; border-radius:6px; font-size:0.9rem; color:#555;">
+        <p><strong>After creating:</strong></p>
+        <ul style="margin:8px 0; padding-left:20px;">
+            <li>Check <code>users</code> table in Railway</li>
+            <li>Login with new credentials</li>
+            <li>Student/Teacher needs extra info later</li>
         </ul>
     </div>
 </div>
+
+<style>
+.btn {
+    background: #4CAF50; color: white; padding: 12px 24px; border: none;
+    border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;
+}
+.btn:hover { background: #388E3C; }
+.form-group { margin: 15px 0; }
+</style>
