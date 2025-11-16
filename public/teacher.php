@@ -9,51 +9,66 @@ if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'teache
 $username = $_SESSION['username'];
 
 // ===== DATABASE CONNECTION =====
-$host = "caboose.proxy.rlwy.net";       // Railway public host
-$port = "29105";                         // Railway port
-$dbname = "railway";                     // Railway database name
-$user = "postgres";                      // Railway username
-$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu"; // Railway password
+$host = "caboose.proxy.rlwy.net";
+$port = "29105";
+$dbname = "railway";
+$user = "postgres";
+$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu";
 
 $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require;";
 
 try {
-    $pdo = $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 } catch (PDOException $e) {
     die("DB Error: " . $e->getMessage());
 }
 
-// --- Get Teacher Info ---
+// --- Get Teacher Info (using users + teachers) ---
 $teacherStmt = $pdo->prepare("
-    SELECT t.teacherid, t.fname, t.lname 
-    FROM tlogin tl
-    JOIN teacher t ON tl.teacherid = t.teacherid
-    WHERE tl.username = ?
+    SELECT 
+        t.id AS teacher_id,
+        t.teacherid, 
+        t.fname, 
+        t.lname 
+    FROM users u
+    JOIN teachers t ON u.id = t.user_id
+    WHERE u.username = ?
 ");
 $teacherStmt->execute([$username]);
 $teacher = $teacherStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$teacher) {
-    die("Teacher not found. Check tlogin table.");
+    die("Teacher not found. Check if '$username' exists in `users` and is linked to `teachers` via `user_id`.");
 }
 
 $fullName = $teacher['fname'] . ' ' . $teacher['lname'];
 $teacherId = $teacher['teacherid'];
+$teacher_id = $teacher['teacher_id']; // Internal ID
 
 // --- Get Current Class (latest session) ---
 $classStmt = $pdo->prepare("
-    SELECT classid, session, term 
-    FROM teacherass 
-    WHERE teacherid = ? 
-    ORDER BY session DESC, term DESC 
+    SELECT 
+        c.classname AS classid, 
+        ta.session, 
+        ta.term 
+    FROM teacher_assignments ta
+    JOIN classes c ON ta.class_id = c.id
+    WHERE ta.teacher_id = ? 
+    ORDER BY ta.session DESC, ta.term DESC 
     LIMIT 1
 ");
-$classStmt->execute([$teacherId]);
+$classStmt->execute([$teacher_id]);
 $currentClass = $classStmt->fetch(PDO::FETCH_ASSOC);
 $classId = $currentClass['classid'] ?? null;
 
-// --- Get Tasks ---
-$tasks = $pdo->query("SELECT taskid, taskname FROM userstatustask ORDER BY taskid")->fetchAll(PDO::FETCH_ASSOC);
+// --- Get Tasks (from tasks + role_tasks) ---
+$tasks = $pdo->query("
+    SELECT t.taskid, t.taskname 
+    FROM tasks t
+    JOIN role_tasks rt ON t.id = rt.task_id
+    WHERE rt.role = 'teacher'
+    ORDER BY t.taskid
+")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -74,7 +89,7 @@ $tasks = $pdo->query("SELECT taskid, taskname FROM userstatustask ORDER BY taski
 
     .sidebar {
       width: 260px; background: var(--green); color: white; padding: 20px;
-      box-shadow: 2px 0 10 PX rgba(0,0,0,0.1); overflow-y: auto;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto;
     }
     .logo { text-align: center; margin-bottom: 20px; }
     .logo img { width: 70px; height: 70px; border-radius: 50%; border: 3px solid white; }
@@ -191,8 +206,8 @@ $tasks = $pdo->query("SELECT taskid, taskname FROM userstatustask ORDER BY taski
         contentArea.innerHTML = '<p>Loading...</p>';
 
         const url = id.startsWith('task_')
-          ? `teacher-task-loader.php?taskid=${id.split('_')[1]}`
-          : `teacher-content.php?view=${id}&classid=<?= $classId ?>&teacherid=<?= $teacherId ?>`;
+          ? `teacher-task-loader.php?taskid=${id.split('_')[1]}&teacher_id=<?= $teacher_id ?>`
+          : `teacher-content.php?view=${id}&classid=<?= urlencode($classId) ?>&teacherid=<?= $teacherId ?>`;
 
         fetch(url)
           .then(res => res.text())
@@ -207,9 +222,10 @@ $tasks = $pdo->query("SELECT taskid, taskname FROM userstatustask ORDER BY taski
       });
     });
 
-    // Auto-load Class List
-    document.querySelector('.task-link[data-id="class"]')?.click();
+    // Auto-load first task or default
+    const firstTask = document.querySelector('.task-link');
+    if (firstTask) firstTask.click();
   </script>
 
 </body>
-</html> 
+</html>
