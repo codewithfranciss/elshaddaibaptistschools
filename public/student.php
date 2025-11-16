@@ -26,6 +26,7 @@ try {
 // --- Get Student Info (using correct column names & joins) ---
 $stmt = $pdo->prepare("
     SELECT 
+        s.id AS student_id,
         s.fname, 
         s.lname, 
         s.stuid, 
@@ -48,8 +49,9 @@ if (!$student) {
 $fullName = $student['fname'] . ' ' . $student['lname'];
 $class = $student['classid'] ?? 'Not Assigned';
 $photo = 'assets/default-avatar.png'; // No pix table
+$student_id = $student['student_id']; // Now safely defined
 
-// --- Get Recent Grades (using student_id, not stuid) ---
+// --- Get Recent Grades (using student_id) ---
 $grades = $pdo->prepare("
     SELECT 
         sub.subname AS subject, 
@@ -62,7 +64,7 @@ $grades = $pdo->prepare("
     ORDER BY ar.session DESC, ar.term DESC 
     LIMIT 5
 ");
-$grades->execute([$student['id']]); // Use $student['id'] from students table
+$grades->execute([$student_id]);
 $recentGrades = $grades->fetchAll(PDO::FETCH_ASSOC);
 
 // --- Get Student Tasks (from tasks + role_tasks) ---
@@ -209,7 +211,7 @@ $tasks = $pdo->query("
 
         const url = id.startsWith('task_') 
           ? `student-task-loader.php?taskid=${id.split('_')[1]}`
-          : `student-content.php?view=${id}`;
+          : `student-content.php?view=${id}&student_id=<?= $student_id ?>&username=<?= urlencode($username) ?>`;
 
         fetch(url)
           .then(res => res.text())
