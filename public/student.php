@@ -9,56 +9,68 @@ if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'studen
 $username = $_SESSION['username'];
 
 // ===== DATABASE CONNECTION =====
-$host = "caboose.proxy.rlwy.net";       // Railway public host
-$port = "29105";                         // Railway port
-$dbname = "railway";                     // Railway database name
-$user = "postgres";                      // Railway username
-$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu"; // Railway password
+$host = "caboose.proxy.rlwy.net";
+$port = "29105";
+$dbname = "railway";
+$user = "postgres";
+$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu";
 
 $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require;";
 
 try {
-    $pdo = $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 } catch (PDOException $e) {
     die("DB Error: " . $e->getMessage());
 }
 
 // --- Get Student Info ---
 $stmt = $pdo->prepare("
-    SELECT s.fname, s.lname, s.stuid, sa.classid, p.pixpath
-    FROM studlogin sl
-    JOIN student s ON sl.stuid = s.stuid
-    LEFT JOIN studentass sa ON s.stuid = sa.studid AND sa.session = (SELECT MAX(session) FROM studentass WHERE studid = s.stuid)
-    LEFT JOIN pix p ON s.stuid = p.stuid
-    WHERE sl.username = ?
+    SELECT 
+        s.fname, 
+        s.lname, 
+        s.stuid, 
+        sa.classid,
+        NULL AS pixpath  -- No photo table yet
+    FROM users u
+    JOIN students s ON u.id = s.user_id
+    LEFT JOIN student_assignments sa ON s.id = sa.student_id 
+        AND sa.session = (SELECT MAX(session) FROM student_assignments WHERE student_id = s.id)
+    WHERE u.username = ?
 ");
 $stmt->execute([$username]);
 $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$student) {
-    die("Student not found.");
+    die("Student not found. Check if username '$username' is linked to a student.");
 }
 
 $fullName = $student['fname'] . ' ' . $student['lname'];
 $class = $student['classid'] ?? 'Not Assigned';
-$photo = $student['pixpath'] ? $student['pixpath'] : 'assets/default-avatar.png';
+$photo = 'assets/default-avatar.png';  // No photos yet
 
 // --- Get Recent Grades ---
 $grades = $pdo->prepare("
-    SELECT subject, score, term, session 
-    FROM academicrecord 
-    WHERE stuid = ? 
-    ORDER BY session DESC, term DESC 
+    SELECT 
+        sub.subname AS subject, 
+        ar.score, 
+        ar.term, 
+        ar.session 
+    FROM academic_records ar
+    JOIN subjects sub ON ar.subject_id = sub.id
+    WHERE ar.student_id = ? 
+    ORDER BY ar.session DESC, ar.term DESC 
     LIMIT 5
 ");
-$grades->execute([$student['stuid']]);
+$grades->execute([$student['id']]);
 $recentGrades = $grades->fetchAll(PDO::FETCH_ASSOC);
 
-// --- Get Student Tasks (from userstatustask) ---
+// --- Get Student Tasks ---
 $tasks = $pdo->query("
-    SELECT taskid, taskname 
-    FROM userstatustask 
-    ORDER BY taskid
+    SELECT t.taskid, t.taskname 
+    FROM tasks t
+    JOIN role_tasks rt ON t.id = rt.task_id
+    WHERE rt.role = 'student'
+    ORDER BY t.taskid
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -132,11 +144,6 @@ $tasks = $pdo->query("
     }
     th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
     th { background: var(--light-green); color: var(--dark-green); }
-    .pay-btn {
-      background: var(--green); color: white; padding: 10px 20px; border: none;
-      border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;
-    }
-    .pay-btn:hover { background: var(--dark-green); }
 
     @media (max-width: 768px) {
       body { flex-direction: column; }
@@ -216,7 +223,6 @@ $tasks = $pdo->query("
       });
     });
 
-    // Auto-load Profile on start
     document.querySelector('.task-link[data-id="profile"]')?.click();
   </script>
 
