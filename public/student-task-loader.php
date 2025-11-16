@@ -4,10 +4,20 @@ if (!isset($_SESSION['username']) || $_SESSION['status'] !== 'student') exit("Ac
 
 $taskId = $_GET['taskid'] ?? 0;
 if (!is_numeric($taskId)) exit("Invalid task.");
+// ===== DATABASE CONNECTION =====
+$host = "caboose.proxy.rlwy.net";       // Railway public host
+$port = "29105";                         // Railway port
+$dbname = "railway";                     // Railway database name
+$user = "postgres";                      // Railway username
+$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu"; // Railway password
 
-$dbHost = '127.0.0.200'; $dbPort = '5432'; $dbName = 'elshrwia_EBS_portal_db';
-$dbUser = 'elshrwia_postgres'; $dbPass = 'tom123tom123@';
-$pdo = new PDO("pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;", $dbUser, $dbPass);
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require;";
+
+try {
+    $pdo = $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+} catch (PDOException $e) {
+    die("DB Error: " . $e->getMessage());
+}
 
 $task = $pdo->query("SELECT taskname FROM userstatustask WHERE taskid = $taskId")->fetchColumn();
 if (!$task) { echo "<p>Task not found.</p>"; exit; }

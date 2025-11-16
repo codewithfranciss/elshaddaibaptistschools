@@ -8,16 +8,17 @@ if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'studen
 }
 $username = $_SESSION['username'];
 
-// --- DB Connection ---
-$dbHost = '127.0.0.200';
-$dbPort = '5432';
-$dbName = 'elshrwia_EBS_portal_db';
-$dbUser = 'elshrwia_postgres';
-$dbPass = 'tom123tom123@'; // CHANGE
+// ===== DATABASE CONNECTION =====
+$host = "caboose.proxy.rlwy.net";       // Railway public host
+$port = "29105";                         // Railway port
+$dbname = "railway";                     // Railway database name
+$user = "postgres";                      // Railway username
+$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu"; // Railway password
 
-$dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;";
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require;";
+
 try {
-    $pdo = new PDO($dsn, $dbUser, $dbPass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $pdo = $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 } catch (PDOException $e) {
     die("DB Error: " . $e->getMessage());
 }

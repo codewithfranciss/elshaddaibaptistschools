@@ -1,52 +1,63 @@
---
--- PostgreSQL database dump
---
+-- PostgreSQL database dump fixed for general use
 
--- Dumped from database version 10.23
--- Dumped by pg_dump version 10.23
+-- Enable plpgsql extension
+CREATE EXTENSION IF NOT EXISTS plpgsql;
 
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
+-- ===========================
+-- TABLES
+-- ===========================
 
---
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
---
+CREATE TABLE public.users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('teacher','student','admin')),
+    created_at TIMESTAMP DEFAULT now()
+);
 
-CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+CREATE TABLE public.classes (
+    id SERIAL PRIMARY KEY,
+    classid VARCHAR(10) NOT NULL UNIQUE,
+    classname VARCHAR(50) NOT NULL
+);
 
+CREATE TABLE public.teachers (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES public.users(id) ON DELETE CASCADE,
+    teacherid VARCHAR(10) NOT NULL UNIQUE,
+    fname VARCHAR(50) NOT NULL,
+    lname VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    phone VARCHAR(15)
+);
 
---
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
---
+CREATE TABLE public.students (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES public.users(id) ON DELETE CASCADE,
+    stuid VARCHAR(20) NOT NULL UNIQUE,
+    fname VARCHAR(50) NOT NULL,
+    lname VARCHAR(50) NOT NULL,
+    gender VARCHAR(10),
+    dob DATE
+);
 
-COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
-
-
-SET default_tablespace = '';
-
-SET default_with_oids = false;
-
---
--- Name: academic_records; Type: TABLE; Schema: public; Owner: elshrwia
---
+CREATE TABLE public.subjects (
+    id SERIAL PRIMARY KEY,
+    subid VARCHAR(20) NOT NULL UNIQUE,
+    subname VARCHAR(100) NOT NULL,
+    class_id INT REFERENCES public.classes(id)
+);
 
 CREATE TABLE public.academic_records (
-    id integer NOT NULL,
-    acadid character varying(50) NOT NULL,
-    student_id integer,
-    subject_id integer,
-    score numeric(5,2),
-    term character varying(20),
-    session character varying(20),
-    teacher_id integer
+    id SERIAL PRIMARY KEY,
+    acadid VARCHAR(50) NOT NULL UNIQUE,
+    student_id INT REFERENCES public.students(id),
+    subject_id INT REFERENCES public.subjects(id),
+    score NUMERIC(5,2),
+    term VARCHAR(20),
+    session VARCHAR(20),
+    teacher_id INT REFERENCES public.teachers(id),
+    UNIQUE(student_id, subject_id, term, session)
 );
 
 CREATE TABLE public.admin (
@@ -54,1210 +65,166 @@ CREATE TABLE public.admin (
     username VARCHAR(50) NOT NULL UNIQUE
 );
 
-ALTER TABLE public.academic_records OWNER TO elshrwia;
+CREATE TABLE public.createuserstatus (
+    statusid SERIAL PRIMARY KEY,
+    statusname VARCHAR(50) NOT NULL UNIQUE
+);
 
---
--- Name: academic_records_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
+CREATE TABLE public.userstatustask (
+    taskid SERIAL PRIMARY KEY,
+    taskname VARCHAR(100) NOT NULL,
+    statusid INT REFERENCES createuserstatus(statusid) ON DELETE SET NULL
+);
 
-CREATE SEQUENCE public.academic_records_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.academic_records_id_seq OWNER TO elshrwia;
-
---
--- Name: academic_records_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.academic_records_id_seq OWNED BY public.academic_records.id;
-
-
---
--- Name: assignments; Type: TABLE; Schema: public; Owner: elshrwia
---
+CREATE TABLE public.adminlogin (
+    loginid SERIAL PRIMARY KEY,
+    adminid INT NOT NULL REFERENCES admin(adminid) ON DELETE CASCADE,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+);
 
 CREATE TABLE public.assignments (
-    id integer NOT NULL,
-    title character varying(100) NOT NULL,
-    description text,
-    filepath text NOT NULL,
-    class_id integer,
-    teacher_id integer,
-    uploaded_at timestamp without time zone DEFAULT now()
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+    filepath TEXT NOT NULL,
+    class_id INT REFERENCES public.classes(id),
+    teacher_id INT REFERENCES public.teachers(id),
+    uploaded_at TIMESTAMP DEFAULT now()
 );
-
-
-ALTER TABLE public.assignments OWNER TO elshrwia;
-
---
--- Name: assignments_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.assignments_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.assignments_id_seq OWNER TO elshrwia;
-
---
--- Name: assignments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.assignments_id_seq OWNED BY public.assignments.id;
-
-
---
--- Name: attendance; Type: TABLE; Schema: public; Owner: elshrwia
---
 
 CREATE TABLE public.attendance (
-    id integer NOT NULL,
-    arid character varying(50) NOT NULL,
-    student_id integer,
-    class_id integer,
-    date date NOT NULL,
-    status smallint,
-    teacher_id integer,
-    CONSTRAINT attendance_status_check CHECK ((status = ANY (ARRAY[0, 1])))
+    id SERIAL PRIMARY KEY,
+    arid VARCHAR(50) NOT NULL UNIQUE,
+    student_id INT REFERENCES public.students(id),
+    class_id INT REFERENCES public.classes(id),
+    date DATE NOT NULL,
+    status SMALLINT CHECK(status IN (0,1)),
+    teacher_id INT REFERENCES public.teachers(id),
+    UNIQUE(student_id, date)
 );
-
-
-ALTER TABLE public.attendance OWNER TO elshrwia;
-
---
--- Name: attendance_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.attendance_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.attendance_id_seq OWNER TO elshrwia;
-
---
--- Name: attendance_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.attendance_id_seq OWNED BY public.attendance.id;
-
-
---
--- Name: classes; Type: TABLE; Schema: public; Owner: elshrwia
---
-
-CREATE TABLE public.classes (
-    id integer NOT NULL,
-    classid character varying(10) NOT NULL,
-    classname character varying(50) NOT NULL
-);
-
-
-ALTER TABLE public.classes OWNER TO elshrwia;
-
---
--- Name: classes_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.classes_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.classes_id_seq OWNER TO elshrwia;
-
---
--- Name: classes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.classes_id_seq OWNED BY public.classes.id;
-
-
---
--- Name: login_log; Type: TABLE; Schema: public; Owner: elshrwia
---
 
 CREATE TABLE public.login_log (
-    id integer NOT NULL,
-    user_id integer,
-    login_time timestamp without time zone DEFAULT now()
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES public.users(id),
+    login_time TIMESTAMP DEFAULT now()
 );
-
-
-ALTER TABLE public.login_log OWNER TO elshrwia;
-
---
--- Name: login_log_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.login_log_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.login_log_id_seq OWNER TO elshrwia;
-
---
--- Name: login_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.login_log_id_seq OWNED BY public.login_log.id;
-
-
---
--- Name: role_tasks; Type: TABLE; Schema: public; Owner: elshrwia
---
-
-CREATE TABLE public.role_tasks (
-    id integer NOT NULL,
-    role character varying(20) NOT NULL,
-    task_id integer
-);
-
-
-ALTER TABLE public.role_tasks OWNER TO elshrwia;
-
---
--- Name: role_tasks_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.role_tasks_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.role_tasks_id_seq OWNER TO elshrwia;
-
---
--- Name: role_tasks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.role_tasks_id_seq OWNED BY public.role_tasks.id;
-
-
---
--- Name: student_assignments; Type: TABLE; Schema: public; Owner: elshrwia
---
-
-CREATE TABLE public.student_assignments (
-    id integer NOT NULL,
-    student_id integer,
-    class_id integer,
-    session character varying(20) NOT NULL,
-    term character varying(20) NOT NULL
-);
-
-
-ALTER TABLE public.student_assignments OWNER TO elshrwia;
-
---
--- Name: student_assignments_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.student_assignments_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.student_assignments_id_seq OWNER TO elshrwia;
-
---
--- Name: student_assignments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.student_assignments_id_seq OWNED BY public.student_assignments.id;
-
-
---
--- Name: students; Type: TABLE; Schema: public; Owner: elshrwia
---
-
-CREATE TABLE public.students (
-    id integer NOT NULL,
-    user_id integer,
-    stuid character varying(20) NOT NULL,
-    fname character varying(50) NOT NULL,
-    lname character varying(50) NOT NULL,
-    gender character varying(10),
-    dob date
-);
-
-
-ALTER TABLE public.students OWNER TO elshrwia;
-
---
--- Name: students_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.students_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.students_id_seq OWNER TO elshrwia;
-
---
--- Name: students_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.students_id_seq OWNED BY public.students.id;
-
-
---
--- Name: subjects; Type: TABLE; Schema: public; Owner: elshrwia
---
-
-CREATE TABLE public.subjects (
-    id integer NOT NULL,
-    subid character varying(20) NOT NULL,
-    subname character varying(100) NOT NULL,
-    class_id integer
-);
-
-
-ALTER TABLE public.subjects OWNER TO elshrwia;
-
---
--- Name: subjects_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.subjects_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.subjects_id_seq OWNER TO elshrwia;
-
---
--- Name: subjects_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.subjects_id_seq OWNED BY public.subjects.id;
-
-
---
--- Name: tasks; Type: TABLE; Schema: public; Owner: elshrwia
---
 
 CREATE TABLE public.tasks (
-    id integer NOT NULL,
-    taskid integer NOT NULL,
-    taskname character varying(100) NOT NULL,
-    route character varying(50) NOT NULL
+    id SERIAL PRIMARY KEY,
+    taskid INT NOT NULL UNIQUE,
+    taskname VARCHAR(100) NOT NULL,
+    route VARCHAR(50) NOT NULL
 );
 
+CREATE TABLE public.role_tasks (
+    id SERIAL PRIMARY KEY,
+    role VARCHAR(30) NOT NULL,
+    task_id INT REFERENCES public.tasks(id),
+    UNIQUE(role, task_id)
+);
 
-ALTER TABLE public.tasks OWNER TO elshrwia;
-
---
--- Name: tasks_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.tasks_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.tasks_id_seq OWNER TO elshrwia;
-
---
--- Name: tasks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.tasks_id_seq OWNED BY public.tasks.id;
-
-
---
--- Name: teacher_assignments; Type: TABLE; Schema: public; Owner: elshrwia
---
+CREATE TABLE public.student_assignments (
+    id SERIAL PRIMARY KEY,
+    student_id INT REFERENCES public.students(id),
+    class_id INT REFERENCES public.classes(id),
+    session VARCHAR(20) NOT NULL,
+    term VARCHAR(20) NOT NULL,
+    UNIQUE(student_id, class_id, session, term)
+);
 
 CREATE TABLE public.teacher_assignments (
-    id integer NOT NULL,
-    teacher_id integer,
-    class_id integer,
-    session character varying(20) NOT NULL,
-    term character varying(20) NOT NULL
+    id SERIAL PRIMARY KEY,
+    teacher_id INT REFERENCES public.teachers(id),
+    class_id INT REFERENCES public.classes(id),
+    session VARCHAR(20) NOT NULL,
+    term VARCHAR(20) NOT NULL,
+    UNIQUE(class_id, session, term),
+    UNIQUE(teacher_id, class_id, session, term)
 );
 
-
-ALTER TABLE public.teacher_assignments OWNER TO elshrwia;
-
---
--- Name: teacher_assignments_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.teacher_assignments_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.teacher_assignments_id_seq OWNER TO elshrwia;
-
---
--- Name: teacher_assignments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.teacher_assignments_id_seq OWNED BY public.teacher_assignments.id;
-
-
---
--- Name: teachers; Type: TABLE; Schema: public; Owner: elshrwia
---
-
-CREATE TABLE public.teachers (
-    id integer NOT NULL,
-    user_id integer,
-    teacherid character varying(10) NOT NULL,
-    fname character varying(50) NOT NULL,
-    lname character varying(50) NOT NULL,
-    email character varying(100) NOT NULL,
-    phone character varying(15)
-);
-
-
-ALTER TABLE public.teachers OWNER TO elshrwia;
-
---
--- Name: teachers_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.teachers_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.teachers_id_seq OWNER TO elshrwia;
-
---
--- Name: teachers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.teachers_id_seq OWNED BY public.teachers.id;
-
-
---
--- Name: users; Type: TABLE; Schema: public; Owner: elshrwia
---
-
-CREATE TABLE public.users (
-    id integer NOT NULL,
-    username character varying(50) NOT NULL,
-    password text NOT NULL,
-    role character varying(20) NOT NULL,
-    created_at timestamp without time zone DEFAULT now(),
-    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['teacher'::character varying, 'student'::character varying, 'admin'::character varying])::text[])))
-);
-
-
-ALTER TABLE public.users OWNER TO elshrwia;
-
---
--- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: elshrwia
---
-
-CREATE SEQUENCE public.users_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.users_id_seq OWNER TO elshrwia;
-
---
--- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: elshrwia
---
-
-ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
-
-
---
--- Name: academic_records id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.academic_records ALTER COLUMN id SET DEFAULT nextval('public.academic_records_id_seq'::regclass);
-
-
---
--- Name: assignments id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.assignments ALTER COLUMN id SET DEFAULT nextval('public.assignments_id_seq'::regclass);
-
-
---
--- Name: attendance id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.attendance ALTER COLUMN id SET DEFAULT nextval('public.attendance_id_seq'::regclass);
-
-
---
--- Name: classes id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.classes ALTER COLUMN id SET DEFAULT nextval('public.classes_id_seq'::regclass);
-
-
---
--- Name: login_log id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.login_log ALTER COLUMN id SET DEFAULT nextval('public.login_log_id_seq'::regclass);
-
-
---
--- Name: role_tasks id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.role_tasks ALTER COLUMN id SET DEFAULT nextval('public.role_tasks_id_seq'::regclass);
-
-
---
--- Name: student_assignments id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.student_assignments ALTER COLUMN id SET DEFAULT nextval('public.student_assignments_id_seq'::regclass);
-
-
---
--- Name: students id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.students ALTER COLUMN id SET DEFAULT nextval('public.students_id_seq'::regclass);
-
-
---
--- Name: subjects id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.subjects ALTER COLUMN id SET DEFAULT nextval('public.subjects_id_seq'::regclass);
-
-
---
--- Name: tasks id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.tasks ALTER COLUMN id SET DEFAULT nextval('public.tasks_id_seq'::regclass);
-
-
---
--- Name: teacher_assignments id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teacher_assignments ALTER COLUMN id SET DEFAULT nextval('public.teacher_assignments_id_seq'::regclass);
-
-
---
--- Name: teachers id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teachers ALTER COLUMN id SET DEFAULT nextval('public.teachers_id_seq'::regclass);
-
-
---
--- Name: users id; Type: DEFAULT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
-
-
---
--- Data for Name: academic_records; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-
-
---
--- Data for Name: assignments; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-
-
---
--- Data for Name: attendance; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-
-
---
--- Data for Name: classes; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-INSERT INTO public.classes VALUES (1, 'JSS1A', 'JSS1 A');
-INSERT INTO public.classes VALUES (2, 'JSS1B', 'JSS1 B');
-
-
---
--- Data for Name: login_log; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-
-
---
--- Data for Name: role_tasks; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-INSERT INTO public.role_tasks VALUES (1, 'teacher', 1);
-INSERT INTO public.role_tasks VALUES (2, 'teacher', 2);
-INSERT INTO public.role_tasks VALUES (3, 'teacher', 3);
-INSERT INTO public.role_tasks VALUES (4, 'teacher', 4);
-INSERT INTO public.role_tasks VALUES (5, 'student', 5);
-INSERT INTO public.role_tasks VALUES (6, 'admin', 6);
-
-
---
--- Data for Name: student_assignments; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-INSERT INTO public.student_assignments VALUES (1, 1, 1, '2025/2026', 'First Term');
-
-
---
--- Data for Name: students; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-INSERT INTO public.students VALUES (1, 2, 'S001', 'Ire', 'Akande', 'Female', '2009-02-10');
-
-
---
--- Data for Name: subjects; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-INSERT INTO public.subjects VALUES (1, 'MATH-J1', 'Mathematics', 1);
-
-
---
--- Data for Name: tasks; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-INSERT INTO public.tasks VALUES (1, 1, 'View My Class', 'view_class');
-INSERT INTO public.tasks VALUES (2, 2, 'Take Attendance', 'take_attendance');
-INSERT INTO public.tasks VALUES (3, 3, 'Upload Result', 'upload_result');
-INSERT INTO public.tasks VALUES (4, 4, 'Upload Assignment', 'upload_assignment');
-INSERT INTO public.tasks VALUES (5, 5, 'View My Results', 'view_results');
-INSERT INTO public.tasks VALUES (6, 6, 'Create User', 'create_user');
-
-
---
--- Data for Name: teacher_assignments; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-INSERT INTO public.teacher_assignments VALUES (1, 1, 1, '2025/2026', 'First Term');
-
-
---
--- Data for Name: teachers; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-INSERT INTO public.teachers VALUES (1, 1, 'T001', 'Tomiwa', 'Akande', 'tomiwa@ebs.com', '08012345678');
-
-
---
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: elshrwia
---
-
-INSERT INTO public.users VALUES (1, 'tomiwa', 'tom12tom12', 'teacher', '2025-11-13 16:17:17.189624');
-INSERT INTO public.users VALUES (2, 'ire', 'tom12tom12', 'student', '2025-11-13 16:17:17.189624');
-INSERT INTO public.users VALUES (3, 'admin', 'admin123', 'admin', '2025-11-13 16:17:17.189624');
-
-
---
--- Name: academic_records_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.academic_records_id_seq', 1, false);
-
-
---
--- Name: assignments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.assignments_id_seq', 1, false);
-
-
---
--- Name: attendance_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.attendance_id_seq', 1, false);
-
-
---
--- Name: classes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.classes_id_seq', 2, true);
-
-
---
--- Name: login_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.login_log_id_seq', 1, false);
-
-
---
--- Name: role_tasks_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.role_tasks_id_seq', 6, true);
-
-
---
--- Name: student_assignments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.student_assignments_id_seq', 1, true);
-
-
---
--- Name: students_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.students_id_seq', 1, true);
-
-
---
--- Name: subjects_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.subjects_id_seq', 1, true);
-
-
---
--- Name: tasks_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.tasks_id_seq', 6, true);
-
-
---
--- Name: teacher_assignments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.teacher_assignments_id_seq', 1, true);
-
-
---
--- Name: teachers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.teachers_id_seq', 1, true);
-
-
---
--- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: elshrwia
---
-
-SELECT pg_catalog.setval('public.users_id_seq', 3, true);
-
-
---
--- Name: academic_records academic_records_acadid_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.academic_records
-    ADD CONSTRAINT academic_records_acadid_key UNIQUE (acadid);
-
-
---
--- Name: academic_records academic_records_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.academic_records
-    ADD CONSTRAINT academic_records_pkey PRIMARY KEY (id);
-
-
---
--- Name: academic_records academic_records_student_id_subject_id_term_session_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.academic_records
-    ADD CONSTRAINT academic_records_student_id_subject_id_term_session_key UNIQUE (student_id, subject_id, term, session);
-
-
---
--- Name: assignments assignments_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.assignments
-    ADD CONSTRAINT assignments_pkey PRIMARY KEY (id);
-
-
---
--- Name: attendance attendance_arid_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.attendance
-    ADD CONSTRAINT attendance_arid_key UNIQUE (arid);
-
-
---
--- Name: attendance attendance_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.attendance
-    ADD CONSTRAINT attendance_pkey PRIMARY KEY (id);
-
-
---
--- Name: attendance attendance_student_id_date_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.attendance
-    ADD CONSTRAINT attendance_student_id_date_key UNIQUE (student_id, date);
-
-
---
--- Name: classes classes_classid_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.classes
-    ADD CONSTRAINT classes_classid_key UNIQUE (classid);
-
-
---
--- Name: classes classes_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.classes
-    ADD CONSTRAINT classes_pkey PRIMARY KEY (id);
-
-
---
--- Name: login_log login_log_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.login_log
-    ADD CONSTRAINT login_log_pkey PRIMARY KEY (id);
-
-
---
--- Name: role_tasks role_tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.role_tasks
-    ADD CONSTRAINT role_tasks_pkey PRIMARY KEY (id);
-
-
---
--- Name: role_tasks role_tasks_role_task_id_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.role_tasks
-    ADD CONSTRAINT role_tasks_role_task_id_key UNIQUE (role, task_id);
-
-
---
--- Name: student_assignments student_assignments_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.student_assignments
-    ADD CONSTRAINT student_assignments_pkey PRIMARY KEY (id);
-
-
---
--- Name: student_assignments student_assignments_student_id_class_id_session_term_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.student_assignments
-    ADD CONSTRAINT student_assignments_student_id_class_id_session_term_key UNIQUE (student_id, class_id, session, term);
-
-
---
--- Name: students students_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.students
-    ADD CONSTRAINT students_pkey PRIMARY KEY (id);
-
-
---
--- Name: students students_stuid_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.students
-    ADD CONSTRAINT students_stuid_key UNIQUE (stuid);
-
-
---
--- Name: subjects subjects_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.subjects
-    ADD CONSTRAINT subjects_pkey PRIMARY KEY (id);
-
-
---
--- Name: subjects subjects_subid_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.subjects
-    ADD CONSTRAINT subjects_subid_key UNIQUE (subid);
-
-
---
--- Name: tasks tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.tasks
-    ADD CONSTRAINT tasks_pkey PRIMARY KEY (id);
-
-
---
--- Name: tasks tasks_taskid_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.tasks
-    ADD CONSTRAINT tasks_taskid_key UNIQUE (taskid);
-
-
---
--- Name: teacher_assignments teacher_assignments_class_id_session_term_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teacher_assignments
-    ADD CONSTRAINT teacher_assignments_class_id_session_term_key UNIQUE (class_id, session, term);
-
-
---
--- Name: teacher_assignments teacher_assignments_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teacher_assignments
-    ADD CONSTRAINT teacher_assignments_pkey PRIMARY KEY (id);
-
-
---
--- Name: teacher_assignments teacher_assignments_teacher_id_class_id_session_term_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teacher_assignments
-    ADD CONSTRAINT teacher_assignments_teacher_id_class_id_session_term_key UNIQUE (teacher_id, class_id, session, term);
-
-
---
--- Name: teachers teachers_email_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teachers
-    ADD CONSTRAINT teachers_email_key UNIQUE (email);
-
-
---
--- Name: teachers teachers_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teachers
-    ADD CONSTRAINT teachers_pkey PRIMARY KEY (id);
-
-
---
--- Name: teachers teachers_teacherid_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teachers
-    ADD CONSTRAINT teachers_teacherid_key UNIQUE (teacherid);
-
-
---
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
-
-
---
--- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_username_key UNIQUE (username);
-
-
---
--- Name: academic_records academic_records_student_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.academic_records
-    ADD CONSTRAINT academic_records_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id);
-
-
---
--- Name: academic_records academic_records_subject_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.academic_records
-    ADD CONSTRAINT academic_records_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id);
-
-
---
--- Name: academic_records academic_records_teacher_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.academic_records
-    ADD CONSTRAINT academic_records_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id);
-
-
---
--- Name: assignments assignments_class_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.assignments
-    ADD CONSTRAINT assignments_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id);
-
-
---
--- Name: assignments assignments_teacher_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.assignments
-    ADD CONSTRAINT assignments_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id);
-
-
---
--- Name: attendance attendance_class_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.attendance
-    ADD CONSTRAINT attendance_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id);
-
-
---
--- Name: attendance attendance_student_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.attendance
-    ADD CONSTRAINT attendance_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id);
-
-
---
--- Name: attendance attendance_teacher_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.attendance
-    ADD CONSTRAINT attendance_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id);
-
-
---
--- Name: login_log login_log_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.login_log
-    ADD CONSTRAINT login_log_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
--- Name: role_tasks role_tasks_task_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.role_tasks
-    ADD CONSTRAINT role_tasks_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.tasks(id);
-
-
---
--- Name: student_assignments student_assignments_class_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.student_assignments
-    ADD CONSTRAINT student_assignments_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id);
-
-
---
--- Name: student_assignments student_assignments_student_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.student_assignments
-    ADD CONSTRAINT student_assignments_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id);
-
-
---
--- Name: students students_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.students
-    ADD CONSTRAINT students_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
-
-
---
--- Name: subjects subjects_class_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.subjects
-    ADD CONSTRAINT subjects_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id);
-
-
---
--- Name: teacher_assignments teacher_assignments_class_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teacher_assignments
-    ADD CONSTRAINT teacher_assignments_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id);
-
-
---
--- Name: teacher_assignments teacher_assignments_teacher_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teacher_assignments
-    ADD CONSTRAINT teacher_assignments_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id);
-
-
---
--- Name: teachers teachers_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: elshrwia
---
-
-ALTER TABLE ONLY public.teachers
-    ADD CONSTRAINT teachers_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
-
-
---
--- Name: TABLE academic_records; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.academic_records TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE assignments; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.assignments TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE attendance; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.attendance TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE classes; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.classes TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE login_log; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.login_log TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE role_tasks; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.role_tasks TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE student_assignments; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.student_assignments TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE students; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.students TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE subjects; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.subjects TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE tasks; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.tasks TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE teacher_assignments; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.teacher_assignments TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE teachers; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.teachers TO "elshrwia_EBS_portal_db ";
-
-
---
--- Name: TABLE users; Type: ACL; Schema: public; Owner: elshrwia
---
-
-GRANT ALL ON TABLE public.users TO "elshrwia_EBS_portal_db ";
-
-
---
--- PostgreSQL database dump complete
---
-
+-- ===========================
+-- INITIAL DATA
+-- ===========================
+
+-- Insert users first (needed for teachers and students)
+INSERT INTO public.users (id, username, password, role, created_at) VALUES
+(1, 'tomiwa', 'tom12tom12', 'teacher', '2025-11-13 16:17:17'),
+(2, 'ire', 'tom12tom12', 'student', '2025-11-13 16:17:17'),
+(3, 'admin', 'admin123', 'admin', '2025-11-13 16:17:17');
+
+-- Classes before subjects or assignments
+INSERT INTO public.classes (id, classid, classname) VALUES
+(1, 'JSS1A', 'JSS1 A'),
+(2, 'JSS1B', 'JSS1 B');
+
+-- Teachers depend on users
+INSERT INTO public.teachers (id, user_id, teacherid, fname, lname, email, phone) VALUES
+(1, 1, 'T001', 'Tomiwa', 'Akande', 'tomiwa@ebs.com', '08012345678');
+
+-- Students depend on users
+INSERT INTO public.students (id, user_id, stuid, fname, lname, gender, dob) VALUES
+(1, 2, 'S001', 'Ire', 'Akande', 'Female', '2009-02-10');
+
+-- Subjects depend on classes
+INSERT INTO public.subjects (id, subid, subname, class_id) VALUES
+(1, 'MATH-J1', 'Mathematics', 1);
+
+-- Academic records depend on students, subjects, teachers
+-- (currently no initial academic record, so skipping)
+
+-- Admin data
+INSERT INTO public.admin (adminid, username) VALUES
+(1, 'admin');
+
+-- Create user statuses
+INSERT INTO public.createuserstatus (statusid, statusname) VALUES
+(1, 'Active'),
+(2, 'Inactive');
+
+-- User status tasks
+INSERT INTO public.userstatustask (taskid, taskname, statusid) VALUES
+(1, 'Approve User', 1),
+(2, 'Reject User', 2);
+
+-- Admin login depends on admin
+INSERT INTO public.adminlogin (loginid, adminid, username, password) VALUES
+(1, 1, 'admin', 'admin123');
+
+-- Assignments (depends on classes, teachers)
+INSERT INTO public.assignments (id, title, description, filepath, class_id, teacher_id, uploaded_at) VALUES
+(1, 'Math Homework', 'Complete exercises 1-10', '/assignments/math1.pdf', 1, 1, now());
+
+-- Attendance (depends on students, classes, teachers)
+INSERT INTO public.attendance (id, arid, student_id, class_id, date, status, teacher_id) VALUES
+(1, 'A001', 1, 1, '2025-11-15', 1, 1);
+
+-- Login log depends on users
+INSERT INTO public.login_log (id, user_id, login_time) VALUES
+(1, 1, now());
+
+-- Tasks
+INSERT INTO public.tasks (id, taskid, taskname, route) VALUES
+(1, 1, 'View My Class', 'view_class'),
+(2, 2, 'Take Attendance', 'take_attendance'),
+(3, 3, 'Upload Result', 'upload_result'),
+(4, 4, 'Upload Assignment', 'upload_assignment'),
+(5, 5, 'View My Results', 'view_results'),
+(6, 6, 'Create User', 'create_user');
+
+-- Role tasks depend on tasks
+INSERT INTO public.role_tasks (id, role, task_id) VALUES
+(1, 'teacher', 1),
+(2, 'teacher', 2),
+(3, 'teacher', 3),
+(4, 'teacher', 4),
+(5, 'student', 5),
+(6, 'admin', 6);
+
+-- Student assignments depend on students and classes
+INSERT INTO public.student_assignments (id, student_id, class_id, session, term) VALUES
+(1, 1, 1, '2025/2026', 'First Term');
+
+-- Teacher assignments depend on teachers and classes
+INSERT INTO public.teacher_assignments (id, teacher_id, class_id, session, term) VALUES
+(1, 1, 1, '2025/2026', 'First Term');

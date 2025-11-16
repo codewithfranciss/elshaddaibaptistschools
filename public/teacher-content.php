@@ -6,9 +6,20 @@ $view = $_GET['view'] ?? '';
 $classId = $_GET['classid'] ?? '';
 $teacherId = $_GET['teacherid'] ?? '';
 
-$dbHost = '127.0.0.200'; $dbPort = '5432'; $dbName = 'elshrwia_EBS_portal_db';
-$dbUser = 'elshrwia_postgre'; $dbPass = 'tom123tom123@';
-$pdo = new PDO("pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;", $dbUser, $dbPass);
+// ===== DATABASE CONNECTION =====
+$host = "caboose.proxy.rlwy.net";       // Railway public host
+$port = "29105";                         // Railway port
+$dbname = "railway";                     // Railway database name
+$user = "postgres";                      // Railway username
+$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu"; // Railway password
+
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require;";
+
+try {
+    $pdo = $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+} catch (PDOException $e) {
+    die("DB Error: " . $e->getMessage());
+}
 
 switch ($view) {
   case 'class':

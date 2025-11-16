@@ -9,9 +9,20 @@ $action = $_POST['action'] ?? '';
 $teacherid = $_SESSION['teacherid'] ?? '';
 $classid   = $_SESSION['classid']   ?? '';
 
-$pdo = new PDO("pgsql:host=127.0.0.200;port=5432;dbname=elshrwia_EBS_portal_db", 
-               "elshrwia_postgres", "tom123tom123@", 
-               [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+// ===== DATABASE CONNECTION =====
+$host = "caboose.proxy.rlwy.net";       // Railway public host
+$port = "29105";                         // Railway port
+$dbname = "railway";                     // Railway database name
+$user = "postgres";                      // Railway username
+$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu"; // Railway password
+
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require;";
+
+try {
+    $pdo = $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+} catch (PDOException $e) {
+    die("DB Error: " . $e->getMessage());
+}
 
 // ------------------- UPLOAD ASSIGNMENT -------------------
 if ($action === 'upload_assignment') {
