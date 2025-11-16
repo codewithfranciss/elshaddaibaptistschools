@@ -49,6 +49,10 @@ CREATE TABLE public.academic_records (
     teacher_id integer
 );
 
+CREATE TABLE public.admin (
+    adminid SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE
+);
 
 ALTER TABLE public.academic_records OWNER TO elshrwia;
 
