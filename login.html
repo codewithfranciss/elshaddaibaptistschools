@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>School Portal - Login</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-container {
+      background: white;
+      padding: 40px 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 380px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      color: #333;
+    }
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 12px 40px 12px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      outline: none;
+      transition: border 0.3s;
+    }
+    .input-group input:focus {
+      border-color: #667eea;
+    }
+    .input-group .eye-icon {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #888;
+      font-size: 18px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover { background: #5a6fd8; }
+    .error {
+      color: #e74c3c;
+      font-size: 14px;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="logo">
+      <!--<img src="logo.png" alt="School Logo">  Replace with your logo -->
+    </div>
+    <h2>Portal Login</h2>
+    <form id="loginForm" action="login.php" method="POST">
+      <div class="input-group">
+        <input type="text" name="username" placeholder="Username" required />
+      </div>
+      <div class="input-group">
+        <input type="password" name="password" id="password" placeholder="Password" required />
+        <span class="eye-icon" id="togglePassword">👁️</span>
+      </div>
+      <button type="submit">Login</button>
+      <p class="error" id="errorMsg"></p>
+    </form>
+  </div>
+
+  <script>
+    const toggle = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
+    toggle.addEventListener('click', () => {
+      const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+      password.setAttribute('type', type);
+      toggle.textContent = type === 'password' ? '👁️' : '🙈';
+    });
+
+    // Optional: Show PHP errors via JS (if redirected back)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('error')) {
+      document.getElementById('errorMsg').textContent = decodeURIComponent(urlParams.get('error'));
+    }
+  </script>
+</body>
+</html>

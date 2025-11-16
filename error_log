@@ -1,0 +1,73 @@
+[13-Nov-2025 16:36:01 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 16:36:05 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 16:36:10 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 16:36:11 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 16:36:17 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 16:37:01 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 18:03:33 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 18:03:41 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 18:12:26 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 18:13:20 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 18:13:57 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 18:14:00 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 18:23:42 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[13-Nov-2025 18:26:17 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[08006] [7] FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "elshrwia_postgre", database "elshrwia_EBS_portal_db", SSL off in /home/elshrwia/public_html/teacher-content.php:11
+Stack trace:
+#0 /home/elshrwia/public_html/teacher-content.php(11): PDO->__construct()
+#1 {main}
+  thrown in /home/elshrwia/public_html/teacher-content.php on line 11
+[15-Nov-2025 15:38:09 UTC] PHP Parse error:  syntax error, unexpected identifier "elshrwia_dozie" in /home/elshrwia/public_html/login.php on line 15
+[15-Nov-2025 15:38:24 UTC] PHP Parse error:  syntax error, unexpected identifier "elshrwia_dozie" in /home/elshrwia/public_html/login.php on line 15
+[15-Nov-2025 15:38:30 UTC] PHP Parse error:  syntax error, unexpected identifier "elshrwia_dozie" in /home/elshrwia/public_html/login.php on line 15
