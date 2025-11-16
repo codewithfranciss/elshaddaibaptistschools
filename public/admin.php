@@ -9,33 +9,37 @@ if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'admin'
 
 $username = $_SESSION['username'];
 
-
 // ===== DATABASE CONNECTION =====
-$host = "caboose.proxy.rlwy.net";       // Railway public host
-$port = "29105";                         // Railway port
-$dbname = "railway";                     // Railway database name
-$user = "postgres";                      // Railway username
-$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu"; // Railway password
+$host = "caboose.proxy.rlwy.net";
+$port = "29105";
+$dbname = "railway";
+$user = "postgres";
+$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu";
 
 $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require;";
 
 try {
-    $pdo = $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 } catch (PDOException $e) {
     die("DB Error: " . $e->getMessage());
 }
 
-// --- 3. Get Admin Name (optional, from admin table) ---
-$stmt = $pdo->prepare("SELECT a.username FROM admin a WHERE a.adminid = (SELECT adminid FROM adminlogin WHERE username = ?)");
+// --- 3. Get Admin Name (from users table) ---
+$adminName = $username; // Fallback
+$stmt = $pdo->prepare("SELECT username FROM users WHERE username = ? AND role = 'admin'");
 $stmt->execute([$username]);
-$admin = $stmt->fetch(PDO::FETCH_ASSOC);
-$adminName = $admin['username'] ?? $username;
+if ($stmt->fetch()) {
+    $adminName = $username;
+}
 
-// --- 4. Get Tasks from userstatustask ---
+// --- 4. Get Tasks from tasks + role_tasks ---
 $tasks = $pdo->query("
-    SELECT t.taskid, t.taskname, s.statusname 
-    FROM userstatustask t
-    LEFT JOIN createuserstatus s ON t.statusid = s.statusid
+    SELECT 
+        t.taskid, 
+        t.taskname
+    FROM tasks t
+    JOIN role_tasks rt ON t.id = rt.task_id
+    WHERE rt.role = 'admin'
     ORDER BY t.taskid
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -48,7 +52,7 @@ $tasks = $pdo->query("
   <title>Admin Dashboard</title>
   <style>
     :root {
-      --green: #4CAF50;        /* Main school green */
+      --green: #4CAF50;
       --light-green: #E8F5E9;
       --dark-green: #388E3C;
       --gray: #f4f4f4;
@@ -105,6 +109,7 @@ $tasks = $pdo->query("
       border-radius: 6px;
       transition: 0.3s;
       font-weight: 500;
+      position: relative;
     }
     .menu ul li a:hover,
     .menu ul li a.active {
@@ -112,9 +117,12 @@ $tasks = $pdo->query("
       transform: translateX(5px);
     }
     .menu .status {
-      float: right;
-      font-size: 0.8rem;
-      background: rgba(0,0,0,0.2);
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.75rem;
+      background: rgba(0,0,0,0.3);
       padding: 2px 8px;
       border-radius: 4px;
     }
@@ -157,6 +165,23 @@ $tasks = $pdo->query("
       border-bottom: 2px solid var(--light-green);
       padding-bottom: 8px;
     }
+    .btn {
+    background: var(--green);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+}
+.btn:hover { background: var(--dark-green); }
+
+.form-control {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
 
     @media (max-width: 768px) {
       body { flex-direction: column; }
@@ -180,18 +205,16 @@ $tasks = $pdo->query("
     <div class="menu">
       <h4>Tasks</h4>
       <ul>
-        <?php foreach ($tasks as $task): ?>
-          <li>
-            <a href="task-details.php?id=<?= $task['taskid'] ?>">
-              <?= htmlspecialchars($task['taskname']) ?>
-              <?php if ($task['statusname']): ?>
-                <span class="status"><?= htmlspecialchars($task['statusname']) ?></span>
-              <?php endif; ?>
-            </a>
-          </li>
-        <?php endforeach; ?>
         <?php if (empty($tasks)): ?>
           <li><em>No tasks assigned.</em></li>
+        <?php else: ?>
+          <?php foreach ($tasks as $task): ?>
+            <li>
+              <a href="admin-task.php?taskid=<?= $task['taskid'] ?>" class="task-link" data-id="task_<?= $task['taskid'] ?>">
+                <?= htmlspecialchars($task['taskname']) ?>
+              </a>
+            </li>
+          <?php endforeach; ?>
         <?php endif; ?>
       </ul>
     </div>
@@ -214,7 +237,39 @@ $tasks = $pdo->query("
       <p><strong>Total Tasks:</strong> <?= count($tasks) ?></p>
       <!-- Add more stats later -->
     </div>
+
+    <div class="card" id="contentArea">
+      <p><em>Select a task from the left menu to begin.</em></p>
+    </div>
   </div>
+
+  <script>
+    document.querySelectorAll('.task-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const taskId = this.dataset.id.split('_')[1];
+        const contentArea = document.getElementById('contentArea');
+
+        document.querySelectorAll('.task-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+
+        contentArea.innerHTML = '<p>Loading task...</p>';
+
+        fetch(`admin-task-loader.php?taskid=${taskId}`)
+          .then(res => res.text())
+          .then(html => {
+            contentArea.innerHTML = html;
+          })
+          .catch(() => {
+            contentArea.innerHTML = '<p style="color:red;">Error loading task.</p>';
+          });
+      });
+    });
+
+    // Auto-load first task
+    const firstTask = document.querySelector('.task-link');
+    if (firstTask) firstTask.click();
+  </script>
 
 </body>
 </html>
