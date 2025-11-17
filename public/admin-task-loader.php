@@ -56,6 +56,9 @@ $allowed_routes = [
     'system_logs'      => 'system_logs.php',
     'assign_teacher'   => 'assign_teacher.php',
     'assign_student'   => 'assign_student.php',
+    'create_student'   => 'create_student.php',
+    'create_teacher'   => 'create_teacher.php',
+
     // Add more as needed
 ];
 
