@@ -1,5 +1,9 @@
 <?php
 // create_user.php — DO NOT CALL session_start() AGAIN!
+// DEBUG: Show all errors
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 // It's already started in admin.php
 
 // Security: Only admin
@@ -26,6 +30,8 @@ $message = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // DEBUG: Show POST data
+    echo '<pre>POST: ' . print_r($_POST, true) . '</pre>';
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $role = $_POST['role'] ?? '';
