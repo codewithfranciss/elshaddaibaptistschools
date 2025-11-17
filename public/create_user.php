@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     <?php endif; ?>
 
-    <form method="POST">
+    <form method="POST" action="create_user.php>
         <div class="form-group">
             <label><strong>Username</strong></label>
             <input type="text" name="username" required placeholder="e.g. tomiwa2025" 
