@@ -54,6 +54,8 @@ $allowed_routes = [
     'assign_roles'     => 'assign_roles.php',
     'backup_db'        => 'backup_db.php',
     'system_logs'      => 'system_logs.php',
+    'assign_teacher'   => 'assign_teacher.php',
+    'assign_student'   => 'assign_student.php',
     // Add more as needed
 ];
 

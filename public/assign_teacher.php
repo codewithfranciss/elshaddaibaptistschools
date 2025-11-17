@@ -66,27 +66,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $check_teacher->execute([$teacher_id, $session]);
         if ($check_teacher->fetch()) {
             $message = "<p style='color:orange; font-weight:bold;'>Teacher already assigned to a class this session!</p>";
-        }
-        // Check if class already has a teacher
-        elseif ($check_class = $pdo->prepare("
-            SELECT id FROM teacher_assignments 
-            WHERE class_id = ? AND session = ?
-        ");
-         $check_class->execute([$class_id, $session]), $check_class->fetch()) {
-            $message = "<p style='color:orange; font-weight:bold;'>Class already assigned a teacher this session!</p>";
-        } 
-        else {
-            $stmt = $pdo->prepare("
-                INSERT INTO teacher_assignments (teacher_id, class_id, session, term)
-                VALUES (?, ?, ?, ?)
+        } else {
+            // Check if class already has a teacher
+            $check_class = $pdo->prepare("
+                SELECT id FROM teacher_assignments 
+                WHERE class_id = ? AND session = ?
             ");
-            if ($stmt->execute([$teacher_id, $class_id, $session, $term])) {
-                $message = "<p style='color:green; font-weight:bold;'>Teacher assigned successfully!</p>";
-                // Refresh lists after success
-                header("Location: admin-task-loader.php?taskid=5");
-                exit;
+            $check_class->execute([$class_id, $session]);
+            if ($check_class->fetch()) {
+                $message = "<p style='color:orange; font-weight:bold;'>Class already assigned a teacher this session!</p>";
             } else {
-                $message = "<p style='color:red;'>Database error.</p>";
+                $stmt = $pdo->prepare("
+                    INSERT INTO teacher_assignments (teacher_id, class_id, session, term)
+                    VALUES (?, ?, ?, ?)
+                ");
+                if ($stmt->execute([$teacher_id, $class_id, $session, $term])) {
+                    $message = "<p style='color:green; font-weight:bold;'>Teacher assigned successfully!</p>";
+                    // Refresh lists after success
+                    header("Location: admin-task-loader.php?taskid=5");
+                    exit;
+                } else {
+                    $message = "<p style='color:red;'>Database error.</p>";
+                }
             }
         }
     }
