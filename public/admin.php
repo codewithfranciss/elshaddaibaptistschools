@@ -223,7 +223,7 @@ $tasks = $pdo->query("
   <!-- MAIN CONTENT -->
   <div class="main">
     <div class="header">
-      <h1>Admin Dashboard</h1>
+      <h1>Admin Dashhhhhboard</h1>
       <a href="logout.php" class="logout-btn">Logout</a>
     </div>
 
