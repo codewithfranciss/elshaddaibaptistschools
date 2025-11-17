@@ -183,7 +183,7 @@ $tasks = $pdo->query("
   <!-- MAIN CONTENT -->
   <div class="main">
     <div class="header">
-      <h1>Teacher Portal</h1>
+      <h1>Teachers Portal</h1>
       <a href="logout.php" class="logout-btn">Logout</a>
     </div>
 
@@ -223,8 +223,8 @@ $tasks = $pdo->query("
     });
 
     // Auto-load first task or default
-    const firstTask = document.querySelector('.task-link');
-    if (firstTask) firstTask.click();
+    //const firstTask = document.querySelector('.task-link');
+    //if (firstTask) firstTask.click();
   </script>
 
 </body>
