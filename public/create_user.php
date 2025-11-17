@@ -1,5 +1,10 @@
 <?php
-session_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+
 
 // Allow only admin
 if (!isset($_SESSION['username']) || $_SESSION['status'] !== 'admin') {
@@ -91,3 +96,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 </body>
 </html>
+<style>
+.form-group { margin: 18px 0; }
+label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+.btn {
+    background: #4CAF50; color: white; padding: 14px 32px; border: none;
+    border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer;
+    transition: 0.3s;
+}
+.btn:hover { background: #388E3C; }
+</style>
