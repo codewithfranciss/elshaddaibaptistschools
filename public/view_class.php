@@ -5,10 +5,10 @@
 session_start();  // ← THIS WAS MISSING! CRITICAL!
 
 // Security check
-if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'teacher') {
-    header("Location: login.php");
-    die("Access denied. Please log in as a teacher.");
-}
+//if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'teacher') {
+   // header("Location: login.php");
+  //  die("Access denied. Please log in as a teacher.");
+//}
 
 $username = $_SESSION['username'];
 

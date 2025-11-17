@@ -18,9 +18,9 @@ try {
 // Get students
 $stmt = $pdo->prepare("
     SELECT s.stuid, s.fname, s.lname
-    FROM studentass sa
-    JOIN student s ON sa.studid = s.stuid
-    WHERE sa.classid = ?
+    FROM student_assignments sa
+    JOIN students s ON sa.student_id = s.id
+    WHERE sa.class_id = ?
     ORDER BY s.lname
 ");
 $stmt->execute([$_TASK['classid']]);
