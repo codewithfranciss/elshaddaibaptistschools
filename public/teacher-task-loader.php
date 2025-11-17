@@ -17,10 +17,10 @@ if (!$teacherId || !$classId) {
 
 // ---------- MAP TASK IDs ----------
 $map = [
-    '1' => 'task-class-list.php',        // View Class List
-    '2' => 'task-upload-assignment.php', // Upload Assignment
-    '3' => 'task-attendance.php',        // Take Attendance
-    '4' => 'task-upload-result.php',     // Upload Result
+    '1' => 'view_class.php',        // View Class List
+    '2' => 'upload-assignment.php', // Upload Assignment
+    '3' => 'take-attendance.php',        // Take Attendance
+    '4' => 'upload-result.php',     // Upload Result
     // add more as you create tasks...
 ];
 
