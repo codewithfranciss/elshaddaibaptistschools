@@ -1,7 +1,7 @@
 <?php
 // view_class.php — FINAL 100% CORRECT & BULLETPROOF VERSION (Nov 2025)
 
-session_start();  // ← THIS WAS MISSING! CRITICAL!
+//session_start();  // ← THIS WAS MISSING! CRITICAL!
 
 // Security check
 //if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'teacher') {

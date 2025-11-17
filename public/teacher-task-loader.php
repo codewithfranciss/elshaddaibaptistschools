@@ -48,7 +48,7 @@ $taskname = $task['taskname'];
 // Map route to actual content
 $allowed_routes = [
     'view_class' => 'view_class.php',        // View Class List
-    'upload-assignment' => 'upload-assignment.php', // Upload Assignment
+    'upload_assignment' => 'upload_assignment.php', // Upload Assignment
     'take_attendance' => 'take_attendance.php',        // Take Attendance
     'upload_result' => 'upload_result.php',     // Upload Result
     // add more as you create tasks...
