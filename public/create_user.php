@@ -1,13 +1,14 @@
 <?php
-// create_user.php — FINAL 100% WORKING VERSION
+// create_user.php — Secure Working Version
+session_start();
 
+// Only admin can access
 if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'admin') {
     die("Access denied.");
 }
 
-// FIXED DSN — THIS IS THE KEY!
-$dsn = "pgsql:host=caboose.proxy.rlwy.net;port=29105;dbname=railway;sslmode=require;options=--search_path=public";
-
+// Database connection
+$dsn = "pgsql:host=caboose.proxy.rlwy.net;port=29105;dbname=railway;sslmode=require;";
 try {
     $pdo = new PDO($dsn, "postgres", "ubYpfEwCHqwsekeSrBtODAJEohrOiviu", [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -25,28 +26,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = trim($_POST['password'] ?? '');
     $role     = $_POST['role'] ?? '';
 
+    // Validate inputs
     if (empty($username) || empty($password) || empty($role)) {
         $message = "<p style='color:red;'>All fields required!</p>";
     } elseif (!in_array($role, ['student', 'teacher', 'admin'])) {
         $message = "<p style='color:red;'>Invalid role!</p>";
     } else {
-        // Check duplicate
+        // Check duplicate username
         $check = $pdo->prepare("SELECT id FROM users WHERE lower(username) = lower(?)");
         $check->execute([$username]);
         if ($check->fetch()) {
-            $message = "<p style='color:red;'>Username <b>$username</b> already exists!</p>";
+            $message = "<p style='color:red;'>Username <b>" . htmlspecialchars($username) . "</b> already exists!</p>";
         } else {
-            // INSERT WITH RETURNING (best practice)
+            // Hash password
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+            // Insert new user
             $stmt = $pdo->prepare("
                 INSERT INTO users (username, password, role, created_at) 
                 VALUES (?, ?, ?, NOW()) 
                 RETURNING id, username, role
             ");
-            
-            if ($stmt->execute([$username, $password, $role])) {
+
+            if ($stmt->execute([$username, $hashedPassword, $role])) {
                 $new_user = $stmt->fetch();
                 $message = "<p style='color:green; font-weight:bold;'>
-                    User <b>{$new_user['username']}</b> created successfully as <b>{$new_user['role']}</b>! 
+                    User <b>" . htmlspecialchars($new_user['username']) . "</b> created successfully as <b>" . htmlspecialchars($new_user['role']) . "</b>! 
                     <small>(ID: {$new_user['id']})</small>
                 </p>";
             } else {
@@ -75,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="form-group">
             <label><strong>Password</strong></label>
-            <input type="text" name="password" required placeholder="e.g. tomiwa123" 
+            <input type="password" name="password" required placeholder="e.g. tomiwa123" 
                    style="width:100%; padding:12px; border:1px solid #ddd; border-radius:6px; font-size:1rem;">
         </div>
 
