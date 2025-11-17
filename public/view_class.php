@@ -1,3 +1,4 @@
+// session_start();  // Already started in parent loader
 <?php
 // view_class.php — FINAL 100% CORRECT & BULLETPROOF VERSION (Nov 2025)
 
@@ -148,10 +149,6 @@ $students = $students_stmt->fetchAll();
 <div class="section">
 
     <h2>My Class</h2>
-    <!-- DEBUG INFO -->
-    <div style="background:#fffbe6; color:#333; padding:10px; border-radius:6px; margin-bottom:10px; font-size:0.95rem;">
-        <strong>Debug:</strong> class_id = <?= htmlspecialchars($assigned_class['class_id']) ?>, session = <?= htmlspecialchars($current_session) ?>, students found = <?= count($students) ?>
-    </div>
 
     <div class="info">
         <strong>Assigned Class:</strong> <?= htmlspecialchars($assigned_class['classname']) ?><br>
