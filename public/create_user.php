@@ -1,3 +1,5 @@
+// DEBUG: Confirm file is running and show POST data
+echo '<pre style="background:#ffe; color:#333; padding:8px; border-radius:4px;">DEBUG: File loaded. POST: ' . print_r($_POST, true) . '</pre>';
 <?php
 // create_user.php — DO NOT CALL session_start() AGAIN!
 // DEBUG: Show all errors
