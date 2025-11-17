@@ -45,6 +45,9 @@ $fullName = $teacher['fname'] . ' ' . $teacher['lname'];
 $teacherId = $teacher['teacherid'];
 $teacher_id = $teacher['teacher_id']; // Internal ID
 
+// Set session teachers_id
+$_SESSION['teachers_id'] = $teacherId;
+
 // --- Get Current Class (latest session) ---
 $classStmt = $pdo->prepare("
     SELECT 
@@ -60,6 +63,11 @@ $classStmt = $pdo->prepare("
 $classStmt->execute([$teacher_id]);
 $currentClass = $classStmt->fetch(PDO::FETCH_ASSOC);
 $classId = $currentClass['classid'] ?? null;
+
+// Set session classid
+if ($classId) {
+  $_SESSION['classid'] = $classId;
+}
 
 // --- Get Tasks (from tasks + role_tasks) ---
 $tasks = $pdo->query("
