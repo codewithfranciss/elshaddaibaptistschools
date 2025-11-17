@@ -49,8 +49,8 @@ $taskname = $task['taskname'];
 $allowed_routes = [
     'view_class' => 'view_class.php',        // View Class List
     'upload-assignment' => 'upload-assignment.php', // Upload Assignment
-    'take-attendance' => 'take-attendance.php',        // Take Attendance
-    'upload-result' => 'upload-result.php',     // Upload Result
+    'take_attendance' => 'take_attendance.php',        // Take Attendance
+    'upload_result' => 'upload_result.php',     // Upload Result
     // add more as you create tasks...
 ];
 
@@ -76,6 +76,8 @@ $_TASK = [
 ];
 
 if (file_exists($content_file)) {
+    // Define include guard for task files
+    define('_TASK_INCLUDED', true);
     include $content_file;
 } else {
     echo "<div class='section'><h2>$taskname</h2><p>Module not implemented yet.</p></div>";
