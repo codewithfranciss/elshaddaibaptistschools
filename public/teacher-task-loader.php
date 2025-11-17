@@ -4,9 +4,10 @@ if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'teache
     http_response_code(403);
     exit("Access denied.");
 }
-
+// ===== DATABASE CONNECTION =====
+$route = $task['route'];
 $taskid = $_GET['taskid'] ?? '';
-$teacherId = $_SESSION['teacherid'] ?? '';
+$teacherId = $_SESSION['teachers_id'] ?? '';
 $classId   = $_SESSION['classid']   ?? '';
 
 // ---------- SECURITY ----------
@@ -17,7 +18,7 @@ if (!$teacherId || !$classId) {
 
 // ---------- MAP TASK IDs ----------
 $map = [
-    '1' => 'view_class.php',        // View Class List
+    'View_class' => 'view_class.php',        // View Class List
     '2' => 'upload-assignment.php', // Upload Assignment
     '3' => 'take-attendance.php',        // Take Attendance
     '4' => 'upload-result.php',     // Upload Result
