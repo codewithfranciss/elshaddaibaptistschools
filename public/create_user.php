@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "<p style='color:red;'>Username <b>" . htmlspecialchars($username) . "</b> already exists!</p>";
         } else {
             // Hash password
-            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            
 
             // Insert new user
             $stmt = $pdo->prepare("
