@@ -1,4 +1,3 @@
-// session_start();  // Already started in parent loader
 <?php
 // view_class.php — FINAL 100% CORRECT & BULLETPROOF VERSION (Nov 2025)
 

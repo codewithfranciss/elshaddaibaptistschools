@@ -50,21 +50,22 @@ $_SESSION['teachers_id'] = $teacherId;
 
 // --- Get Current Class (latest session) ---
 $classStmt = $pdo->prepare("
-    SELECT 
-        c.classname AS classid, 
-        ta.session, 
-        ta.term 
-    FROM teacher_assignments ta
-    JOIN classes c ON ta.class_id = c.id
-    WHERE ta.teacher_id = ? 
-    ORDER BY ta.session DESC, ta.term DESC 
-    LIMIT 1
+  SELECT 
+    c.id AS classid, 
+    c.classname, 
+    ta.session, 
+    ta.term 
+  FROM teacher_assignments ta
+  JOIN classes c ON ta.class_id = c.id
+  WHERE ta.teacher_id = ? 
+  ORDER BY ta.session DESC, ta.term DESC 
+  LIMIT 1
 ");
 $classStmt->execute([$teacher_id]);
 $currentClass = $classStmt->fetch(PDO::FETCH_ASSOC);
 $classId = $currentClass['classid'] ?? null;
 
-// Set session classid
+// Set session classid to numeric ID
 if ($classId) {
   $_SESSION['classid'] = $classId;
 }
