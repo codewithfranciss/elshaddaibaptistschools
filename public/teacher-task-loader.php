@@ -46,20 +46,22 @@ $route = $task['route'];
 $taskname = $task['taskname'];
 
 // Map route to actual content
+
 $allowed_routes = [
-    'View_class' => 'view_class.php',        // View Class List
+    'view_class' => 'view_class.php',        // View Class List
     'upload-assignment' => 'upload-assignment.php', // Upload Assignment
     'take-attendance' => 'take-attendance.php',        // Take Attendance
     'upload-result' => 'upload-result.php',     // Upload Result
     // add more as you create tasks...
 ];
 
-if (!isset($allowed_routes[$route])) {
+$route_key = strtolower($route);
+if (!isset($allowed_routes[$route_key])) {
     echo "<div class='section'><h2>$taskname</h2><p>Feature coming soon.</p></div>";
     exit;
 }
 
-$content_file = $allowed_routes[$route];
+$content_file = $allowed_routes[$route_key];
 
 // Get teacher/class from sessn
 $teacherId = $_SESSION['teachers_id'] ?? '';
