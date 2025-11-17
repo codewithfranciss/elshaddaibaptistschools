@@ -47,8 +47,9 @@ $term_query = $pdo->query("
 $current_term = $term_query->fetchColumn() ?: 'First Term';
 
 // Get teacher internal ID
+
 $stmt = $pdo->prepare("
-    SELECT t.id 
+    SELECT t.teacherid 
     FROM teachers t
     JOIN users u ON t.user_id = u.id
     WHERE u.username = ?
@@ -60,9 +61,11 @@ if (!$teacher) {
     die("<h3>Error:</h3> Teacher account not found for username: " . htmlspecialchars($username));
 }
 
-$teacher_id = $teacher['id'];
+$teacher_code = $teacher['teacherid'];
 
 // Get teacher's CURRENT class assignment (session + latest term)
+
+
 $assigned_stmt = $pdo->prepare("
     SELECT 
         c.classname, 
@@ -71,12 +74,12 @@ $assigned_stmt = $pdo->prepare("
         ta.class_id
     FROM teacher_assignments ta
     JOIN classes c ON ta.class_id = c.id
-    WHERE ta.teacher_id = ?
-      AND TRIM(ta.session) ILIKE TRIM(?)
-      AND TRIM(ta.term) ILIKE TRIM(?)
+    WHERE ta.teachers_id = ?
+        AND TRIM(ta.session) ILIKE TRIM(?)
+        AND TRIM(ta.term) ILIKE TRIM(?)
     LIMIT 1
 ");
-$assigned_stmt->execute([$teacher_id, $current_session, $current_term]);
+$assigned_stmt->execute([$teacher_code, $current_session, $current_term]);
 $assigned_class = $assigned_stmt->fetch();
 
 if (!$assigned_class) {
@@ -85,7 +88,7 @@ if (!$assigned_class) {
         SELECT c.classname, ta.session, ta.term, ta.class_id
         FROM teacher_assignments ta
         JOIN classes c ON ta.class_id = c.id
-        WHERE ta.teacher_id = ? AND TRIM(ta.session) ILIKE TRIM(?)
+        WHERE ta.teachers_id = ? AND TRIM(ta.session) ILIKE TRIM(?)
         ORDER BY 
             CASE ta.term 
                 WHEN 'First Term' THEN 1
@@ -95,7 +98,7 @@ if (!$assigned_class) {
             END DESC
         LIMIT 1
     ");
-    $fallback->execute([$teacher_id, $current_session]);
+    $fallback->execute([$teacher_code, $current_session]);
     $assigned_class = $fallback->fetch();
 
     if (!$assigned_class) {
@@ -110,13 +113,14 @@ if (!$assigned_class) {
 }
 
 // Now get students in that exact class + session
+
 $students_stmt = $pdo->prepare("
-    SELECT s.fname, s.lname, s.stuid, s.gender
-    FROM student_assignments sa
-    JOIN students s ON sa.student_id = s.id
-    WHERE sa.class_id = ?
-      AND TRIM(sa.session) ILIKE TRIM(?)
-    ORDER BY s.fname, s.lname
+        SELECT s.fname, s.lname, s.stuid, s.gender
+        FROM student_assignments sa
+        JOIN students s ON sa.student_id = s.id
+        WHERE sa.class_id = ?
+            AND TRIM(sa.session) ILIKE TRIM(?)
+        ORDER BY s.fname, s.lname
 ");
 $students_stmt->execute([$assigned_class['class_id'], $current_session]);
 $students = $students_stmt->fetchAll();
