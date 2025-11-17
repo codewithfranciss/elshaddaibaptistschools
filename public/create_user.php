@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 RETURNING id, username, role
             ");
 
-            if ($stmt->execute([$username, $hashedPassword, $role])) {
+            if ($stmt->execute([$username, $password, $role])) {
                 $new_user = $stmt->fetch();
                 $message = "<p style='color:green; font-weight:bold;'>
                     User <b>" . htmlspecialchars($new_user['username']) . "</b> created successfully as <b>" . htmlspecialchars($new_user['role']) . "</b>! 
