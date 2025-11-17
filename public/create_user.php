@@ -50,7 +50,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->execute([$username, $password, $role])) {
                 $message = "<p style='color:green; font-weight:bold;'>User <b>$username</b> created as <b>$role</b>!</p>";
                 // DEBUG: Show SQL proof
-                $message .= "<p style='font-size:0.9rem; color:#555;'><em>Check DB → users table → new row added.</em></p>";
+                $check_insert = $pdo->prepare("SELECT * FROM users WHERE username = ?");
+                $check_insert->execute([$username]);
+                $row = $check_insert->fetch(PDO::FETCH_ASSOC);
+                if ($row) {
+                    $message .= "<pre style='background:#eee; padding:8px; border-radius:4px;'>" . print_r($row, true) . "</pre>";
+                } else {
+                    $message .= "<p style='color:red;'>User not found after insert!</p>";
+                }
             } else {
                 $message = "<p style='color:red;'>Failed to insert into database.</p>";
             }
