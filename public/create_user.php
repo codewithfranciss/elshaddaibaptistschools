@@ -1,6 +1,8 @@
 <?php
 // create_user.php — Secure Working Version
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Only admin can access
 if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'admin') {
