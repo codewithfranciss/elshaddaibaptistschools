@@ -1,0 +1,47 @@
+# .htaccess — CLEAN URLs + SECURITY + SPEED
+
+# 1. Enable Rewrite Engine
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# 2. Remove .php extension + force clean URLs
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.*)$ $1.php [L]
+
+# 3. Clean URLs with hyphens (e.g. create-user, assign-teacher)
+RewriteRule ^create-user$ create_user.php [L]
+RewriteRule ^assign-teacher$ assign_teacher.php [L]
+RewriteRule ^assign-student$ assign_student.php [L]
+RewriteRule ^manage-users$ manage_users.php [L]
+
+# 4. Main pages (no .php in URL)
+RewriteRule ^login$ login.html [L]
+RewriteRule ^student$ student.php [L]
+RewriteRule ^teacher$ teacher.php [L]
+RewriteRule ^admin$ admin.php [L]
+RewriteRule ^logout$ logout.php [L]
+
+# 5. Block direct access to important files
+<Files ~ "\.(php|env|log)$">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "login.html">
+    Allow from all
+</Files>
+
+# 6. Prevent directory browsing
+Options -Indexes
+
+# 7. Improve speed (optional but good)
+<IfModule mod_expires.c>
+    ExpiresActive on
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
