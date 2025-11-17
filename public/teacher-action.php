@@ -25,32 +25,30 @@ try {
 }
 
 // ------------------- UPLOAD ASSIGNMENT -------------------
-if ($action === 'upload_assignment') {
-    $title = $_POST['title'] ?? '';
-    $desc  = $_POST['desc'] ?? '';
-    if (!isset($_FILES['file']) || $_FILES['file']['error'] !== 0) {
-        echo "File upload failed.";
-        exit;
+
+// Inside teacher-action.php
+
+if ($_POST['action'] === 'upload_text_assignment') {
+    session_start();
+    if ($_SESSION['status'] !== 'teacher') die("Access denied.");
+
+    $title = trim($_POST['title']);
+    $content = $_POST['content'];
+    $class_id = (int)$_POST['class_id'];
+
+    // DB connection (same as before)
+    $host = "caboose.proxy.rlwy.net"; $port = "29105"; $dbname = "railway";
+    $user = "postgres"; $password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu";
+    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require;options=--search_path=public";
+
+    $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+
+    $stmt = $pdo->prepare("INSERT INTO assignments (class_id, title, content, uploaded_by, uploaded_at) VALUES (?, ?, ?, ?, NOW())");
+    if ($stmt->execute([$class_id, $title, $content, $_SESSION['username']])) {
+        echo "Assignment uploaded successfully! Students can now view it.";
+    } else {
+        echo "Failed to upload assignment.";
     }
-
-    $file = $_FILES['file'];
-    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $allowed = ['pdf','doc','docx','txt'];
-    if (!in_array(strtolower($ext), $allowed)) {
-        echo "Invalid file type.";
-        exit;
-    }
-
-    $uploadDir = 'uploads/assignments/';
-    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-    $filename = $teacherid . '_' . time() . '.' . $ext;
-    move_uploaded_file($file['tmp_name'], $uploadDir . $filename);
-
-    // Optional: save to DB
-    $stmt = $pdo->prepare("INSERT INTO assignments (title, description, filepath, classsoon, teacherid, uploaded_at) VALUES (?, ?, ?, ?, ?, NOW())");
-    $stmt->execute([$title, $desc, $uploadDir.$filename, $classid, $teacherid]);
-
-    echo "Assignment uploaded successfully.";
     exit;
 }
 
