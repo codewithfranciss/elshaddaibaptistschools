@@ -1,22 +1,51 @@
 <?php
+
+
 session_start();
 if (!isset($_SESSION['username']) || strtolower($_SESSION['status']) !== 'teacher') {
-    http_response_code(403);
-    exit("Access denied.");
+    die("Access denied.");
 }
-// ===== DATABASE CONNECTION =====
-$route = $task['route'];
-$taskid = $_GET['taskid'] ?? '';
-$teacherId = $_SESSION['teachers_id'] ?? '';
-$classId   = $_SESSION['classid']   ?? '';
 
-// ---------- SECURITY ----------
-if (!$teacherId || !$classId) {
-    echo "<p class='error'>Teacher or class not assigned.</p>";
+$taskid = $_GET['taskid'] ?? '';
+if (!$taskid || !is_numeric($taskid)) {
+    echo "<p style='color:red;'>Invalid task ID.</p>";
     exit;
 }
 
-// ---------- MAP TASK IDs ----------
+// Database Connection
+$host = "caboose.proxy.rlwy.net";
+$port = "29105";
+$dbname = "railway";
+$user = "postgres";
+$password = "ubYpfEwCHqwsekeSrBtODAJEohrOiviu";
+
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require;";
+
+try {
+    $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+} catch (PDOException $e) {
+    die("DB Error: " . $e->getMessage());
+}
+
+// Get task details
+$stmt = $pdo->prepare("
+    SELECT t.taskname, t.route 
+    FROM tasks t
+    JOIN role_tasks rt ON t.id = rt.task_id
+    WHERE rt.role = 'teacher' AND t.taskid = ?
+");
+$stmt->execute([$taskid]);
+$task = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$task) {
+    echo "<p style='color:red;'>Task not found or not assigned to teacher.</p>";
+    exit;
+}
+
+$route = $task['route'];
+$taskname = $task['taskname'];
+
+// Map route to actual content
 $allowed_routes = [
     'View_class' => 'view_class.php',        // View Class List
     'upload-assignment' => 'upload-assignment.php', // Upload Assignment
@@ -25,13 +54,20 @@ $allowed_routes = [
     // add more as you create tasks...
 ];
 
-if (!isset($map[$taskid])) {
-    http_response_code(404);
-    echo "<p class='error'>Task not found.</p>";
+if (!isset($allowed_routes[$route])) {
+    echo "<div class='section'><h2>$taskname</h2><p>Feature coming soon.</p></div>";
     exit;
 }
 
-$filename = $map[$taskid];
+$content_file = $allowed_routes[$route];
+
+// Get teacher/class from sessn
+$teacherId = $_SESSION['teachers_id'] ?? '';
+$classId   = $_SESSION['classid']   ?? '';
+if (!$teacherId || !$classId) {
+    echo "<p class='error'>Teacher or class not assigned.</p>";
+    exit;
+}
 
 // Pass variables to included file
 $_TASK = [
@@ -40,5 +76,10 @@ $_TASK = [
     'taskid'    => $taskid
 ];
 
-include $filename;
+// Include content if file exists
+if (file_exists($content_file)) {
+    include $content_file;
+} else {
+    echo "<div class='section'><h2>$taskname</h2><p>Module not implemented yet.</p></div>";
+}
 ?>
