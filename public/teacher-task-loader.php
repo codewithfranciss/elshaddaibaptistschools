@@ -46,7 +46,6 @@ $route = $task['route'];
 $taskname = $task['taskname'];
 
 // Map route to actual content
-
 $allowed_routes = [
     'view_class' => 'view_class.php',        // View Class List
     'upload-assignment' => 'upload-assignment.php', // Upload Assignment
@@ -55,15 +54,13 @@ $allowed_routes = [
     // add more as you create tasks...
 ];
 
-$route_key = strtolower($route);
-if (!isset($allowed_routes[$route_key])) {
+if (!isset($allowed_routes[$route])) {
     echo "<div class='section'><h2>$taskname</h2><p>Feature coming soon.</p></div>";
     exit;
 }
 
-$content_file = $allowed_routes[$route_key];
+$content_file = $allowed_routes[$route];
 
-// Get teacher/class from sessn
 $teacherId = $_SESSION['teachers_id'] ?? '';
 $classId   = $_SESSION['classid']   ?? '';
 if (!$teacherId || !$classId) {
@@ -73,12 +70,11 @@ if (!$teacherId || !$classId) {
 
 // Pass variables to included file
 $_TASK = [
-    'teachers_id' => $teacherId,
+    'teacherid' => $teacherId,
     'classid'   => $classId,
     'taskid'    => $taskid
 ];
 
-// Include content if file exists
 if (file_exists($content_file)) {
     include $content_file;
 } else {
