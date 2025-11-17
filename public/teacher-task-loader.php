@@ -17,11 +17,11 @@ if (!$teacherId || !$classId) {
 }
 
 // ---------- MAP TASK IDs ----------
-$map = [
+$allowed_routes = [
     'View_class' => 'view_class.php',        // View Class List
-    '2' => 'upload-assignment.php', // Upload Assignment
-    '3' => 'take-attendance.php',        // Take Attendance
-    '4' => 'upload-result.php',     // Upload Result
+    'upload-assignment' => 'upload-assignment.php', // Upload Assignment
+    'take-attendance' => 'take-attendance.php',        // Take Attendance
+    'upload-result' => 'upload-result.php',     // Upload Result
     // add more as you create tasks...
 ];
 
