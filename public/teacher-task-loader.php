@@ -73,7 +73,7 @@ if (!$teacherId || !$classId) {
 
 // Pass variables to included file
 $_TASK = [
-    'teacherid' => $teacherId,
+    'teachers_id' => $teacherId,
     'classid'   => $classId,
     'taskid'    => $taskid
 ];
