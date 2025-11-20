@@ -50,7 +50,8 @@ $allowed_routes = [
     'view_class' => 'view_class.php',        // View Class List
     'upload_assignment' => 'upload_assignment.php', // Upload Assignment
     'take_attendance' => 'take_attendance.php',        // Take Attendance
-    'upload_result' => 'upload_result.php',     // Upload Result
+    'upload_result' => 'upload_result.php',
+    'create_user' => 'create_user.php',     // Upload Result
     // add more as you create tasks...
 ];
 
