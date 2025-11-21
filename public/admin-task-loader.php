@@ -47,6 +47,8 @@ $taskname = $task['taskname'];
 
 // Map route to actual content
 $allowed_routes = [
+   'create_student'   => 'create_student.php',
+    'create_teacher'   => 'create_teacher.php',
     'manage_users'     => 'manage_users.php',
     'view_reports'     => 'view_reports.php',
     'settings'         => 'settings.php',
@@ -56,8 +58,7 @@ $allowed_routes = [
     'system_logs'      => 'system_logs.php',
     'assign_teacher'   => 'assign_teacher.php',
     'assign_student'   => 'assign_student.php',
-    'create_student'   => 'create_student.php',
-    'create_teacher'   => 'create_teacher.php',
+    
 
     // Add more as needed
 ];
