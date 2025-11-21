@@ -19,7 +19,7 @@ try {
     die("DB Error: " . $e->getMessage());
 }
 
-// Get user_id first
+// Get user_id
 $user_stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
 $user_stmt->execute([$username]);
 $user = $user_stmt->fetch();
@@ -30,7 +30,7 @@ if (!$user) {
 
 $user_id = $user['id'];
 
-// Check if profile already complete
+// Check if profile is complete
 $profile_complete = false;
 if ($role === 'student') {
     $check = $pdo->prepare("SELECT fname FROM students WHERE user_id = ? AND fname IS NOT NULL AND fname != ''");
@@ -57,40 +57,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $gender = $_POST['gender'];
         $dob    = $_POST['dob'];
 
-        // UPSERT: Insert or Update
-        $sql = "INSERT INTO students (user_id, stuid, fname, lname, gender, dob) 
-                VALUES (?, ?, ?, ?, ?, ?) 
-                ON CONFLICT (user_id) DO UPDATE 
-                SET stuid = EXCLUDED.stuid, 
-                    fname = EXCLUDED.fname, 
-                    lname = EXCLUDED.lname, 
-                    gender = EXCLUDED.gender, 
-                    dob = EXCLUDED.dob";
-        
-        $stmt = $pdo->prepare($sql);
-        $success = $stmt->execute([$user_id, $stuid, $fname, $lname, $gender, $dob]);
+        // Check if row exists, update or insert
+        $check_exist = $pdo->prepare("SELECT 1 FROM students WHERE user_id = ?");
+        $check_exist->execute([$user_id]);
+        if ($check_exist->fetch()) {
+            // Update existing row
+            $stmt = $pdo->prepare("
+                UPDATE students 
+                SET stuid = ?, fname = ?, lname = ?, gender = ?, dob = ?
+                WHERE user_id = ?
+            ");
+            $success = $stmt->execute([$stuid, $fname, $lname, $gender, $dob, $user_id]);
+        } else {
+            // Insert new row
+            $stmt = $pdo->prepare("
+                INSERT INTO students (user_id, stuid, fname, lname, gender, dob)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            $success = $stmt->execute([$user_id, $stuid, $fname, $lname, $gender, $dob]);
+        }
 
     } else { // teacher
         $teacherid = strtoupper(trim($_POST['teacherid']));
         $phone = trim($_POST['phone']);
 
-        $sql = "INSERT INTO teachers (user_id, teacherid, fname, lname, phone) 
-                VALUES (?, ?, ?, ?, ?) 
-                ON CONFLICT (user_id) DO UPDATE 
-                SET teacherid = EXCLUDED.teacherid, 
-                    fname = EXCLUDED.fname, 
-                    lname = EXCLUDED.lname, 
-                    phone = EXCLUDED.phone";
-        
-        $stmt = $pdo->prepare($sql);
-        $success = $stmt->execute([$user_id, $teacherid, $fname, $lname, $phone]);
+        $check_exist = $pdo->prepare("SELECT 1 FROM teachers WHERE user_id = ?");
+        $check_exist->execute([$user_id]);
+        if ($check_exist->fetch()) {
+            $stmt = $pdo->prepare("
+                UPDATE teachers 
+                SET teacherid = ?, fname = ?, lname = ?, phone = ?
+                WHERE user_id = ?
+            ");
+            $success = $stmt->execute([$teacherid, $fname, $lname, $phone, $user_id]);
+        } else {
+            $stmt = $pdo->prepare("
+                INSERT INTO teachers (user_id, teacherid, fname, lname, phone)
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $success = $stmt->execute([$user_id, $teacherid, $fname, $lname, $phone]);
+        }
     }
 
     if ($success) {
-        echo "<script>alert('Profile completed successfully!'); location.href='" . ($role === 'admin' ? 'admin.php' : $role . '.php') . "';</script>";
+        echo "<script>alert('Profile completed successfully! Welcome!'); 
+              location.href='" . ($role === 'admin' ? 'admin.php' : $role . '.php') . "';</script>";
         exit;
     } else {
-        $error = "Failed to save profile. Try again.";
+        $error = "Failed to save profile. Contact admin.";
     }
 }
 ?>
