@@ -19,11 +19,17 @@ try {
     die("DB Error: " . $e->getMessage());
 }
 
-// Get user_id
-$user_id = $pdo->prepare("SELECT id FROM users WHERE username = ?")->execute([$username])
-    ? $pdo->fetchColumn() : die("User not found.");
+// GET USER ID PROPERLY — THIS WAS THE BUG!
+$stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+$stmt->execute([$username]);
+$user = $stmt->fetch();
 
-// Auto-create empty profile row if missing (GENIUS FIX)
+if (!$user) {
+    die("User not found. Contact admin.");
+}
+$user_id = $user['id'];  // FIXED!
+
+// AUTO-CREATE EMPTY PROFILE IF MISSING
 if ($role === 'student') {
     $pdo->prepare("INSERT INTO students (user_id, stuid) VALUES (?, ?) ON CONFLICT (user_id) DO NOTHING")
         ->execute([$user_id, 'TEMP-' . $user_id]);
@@ -32,14 +38,16 @@ if ($role === 'student') {
         ->execute([$user_id, 'TEMP-' . $user_id]);
 }
 
-// Check if profile is already complete
+// CHECK IF PROFILE IS COMPLETE
 $is_complete = false;
 if ($role === 'student') {
-    $is_complete = $pdo->prepare("SELECT fname FROM students WHERE user_id = ? AND fname IS NOT NULL AND fname != ''")
-        ->execute([$user_id]) && $pdo->fetchColumn();
+    $check = $pdo->prepare("SELECT 1 FROM students WHERE user_id = ? AND fname IS NOT NULL AND fname != ''");
+    $check->execute([$user_id]);
+    $is_complete = $check->fetchColumn() == 1;
 } elseif ($role === 'teacher') {
-    $is_complete = $pdo->prepare("SELECT fname FROM teachers WHERE user_id = ? AND fname IS NOT NULL AND fname != ''")
-        ->execute([$user_id]) && $pdo->fetchColumn();
+    $check = $pdo->prepare("SELECT 1 FROM teachers WHERE user_id = ? AND fname IS NOT NULL AND fname != ''");
+    $check->execute([$user_id]);
+    $is_complete = $check->fetchColumn() == 1;
 }
 
 if ($is_complete) {
@@ -59,37 +67,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $gender = $_POST['gender'];
         $dob    = $_POST['dob'];
 
-        $stmt = $pdo->prepare("
-            INSERT INTO students (user_id, stuid, fname, lname, gender, dob)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT (user_id) DO UPDATE SET
-                stuid = EXCLUDED.stuid,
-                fname = EXCLUDED.fname,
-                lname = EXCLUDED.lname,
-                gender = EXCLUDED.gender,
-                dob = EXCLUDED.dob
-        ");
+        $sql = "INSERT INTO students (user_id, stuid, fname, lname, gender, dob)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT (user_id) DO UPDATE SET
+                stuid = EXCLUDED.stuid, fname = EXCLUDED.fname, lname = EXCLUDED.lname,
+                gender = EXCLUDED.gender, dob = EXCLUDED.dob";
+
+        $stmt = $pdo->prepare($sql);
         $success = $stmt->execute([$user_id, $stuid, $fname, $lname, $gender, $dob]);
 
     } elseif ($role === 'teacher') {
         $teacherid = strtoupper(trim($_POST['teacherid']));
         $phone = trim($_POST['phone']);
 
-        $stmt = $pdo->prepare("
-            INSERT INTO teachers (user_id, teacherid, fname, lname, phone)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT (user_id) DO UPDATE SET
-                teacherid = EXCLUDED.teacherid,
-                fname = EXCLUDED.fname,
-                lname = EXCLUDED.lname,
-                phone = EXCLUDED.phone
-        ");
+        $sql = "INSERT INTO teachers (user_id, teacherid, fname, lname, phone)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT (user_id) DO UPDATE SET
+                teacherid = EXCLUDED.teacherid, fname = EXCLUDED.fname,
+                lname = EXCLUDED.lname, phone = EXCLUDED.phone";
+
+        $stmt = $pdo->prepare($sql);
         $success = $stmt->execute([$user_id, $teacherid, $fname, $lname, $phone]);
     }
 
     if ($success) {
         echo "<script>
-            alert('Profile completed successfully! Welcome, " . htmlspecialchars($fname) . "!');
+            alert('Welcome, " . htmlspecialchars($fname) . "! Profile completed successfully!');
             location.href = '" . ($role === 'admin' ? 'admin.php' : $role . '.php') . "';
         </script>";
         exit;
@@ -106,20 +109,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: 'Segoe UI', Arial; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
-        .box { max-width: 520px; margin: 50px auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); text-align: center; }
+        .box { max-width: 520px; margin: 60px auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); text-align: center; }
         h2 { color: #1a3d7c; font-size: 2rem; margin-bottom: 10px; }
         p { color: #555; font-size: 1.1rem; }
         input, select { width: 100%; padding: 16px; margin: 12px 0; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1.1rem; transition: 0.3s; }
         input:focus, select:focus { border-color: #667eea; outline: none; }
         button { background: #667eea; color: white; padding: 18px; width: 100%; border: none; border-radius: 12px; font-size: 1.3rem; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.3s; }
-        button:hover { background: #5a6fd8; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102,126,234,0.3); }
+        button:hover { background: #5a6fd8; transform: translateY(-3px); box-shadow: 0 10px 25px rgba(102,126,234,0.4); }
         .error { background: #ffebee; color: #c62828; padding: 15px; border-radius: 10px; margin: 15px 0; }
     </style>
 </head>
 <body>
 <div class="box">
     <h2>Welcome, <?= htmlspecialchars($username) ?>!</h2>
-    <p>Let's complete your profile</p>
+    <p>Complete your profile to continue</p>
 
     <?php if (isset($error)) echo "<div class='error'>$error</div>"; ?>
 
@@ -140,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" name="phone" placeholder="Phone Number (e.g. 08012345678)" required>
         <?php endif; ?>
 
-        <button type="submit">Complete Profile & Continue</button>
+        <button type="submit">Complete Profile</button>
     </form>
 </div>
 </body>
