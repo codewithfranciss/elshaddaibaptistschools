@@ -51,7 +51,7 @@ $allowed_routes = [
     'upload_assignment' => 'upload_assignment.php', // Upload Assignment
     'take_attendance' => 'take_attendance.php',        // Take Attendance
     'upload_result' => 'upload_result.php',
-    'create_user' => 'create_user.php',     // Upload Result
+    'create_student' => 'create_student.php',     // Upload Result
     // add more as you create tasks...
 ];
 
