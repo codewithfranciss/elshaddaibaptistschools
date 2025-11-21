@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <?php if ($message) echo "<div style='margin:20px 0; font-size:1.1rem;'>$message</div>"; ?>
 
-    <form method="POST">
+    <form method="POST" action="create_student.php">
         <div class="form-group">
             <label><strong>Username</strong></label>
             <input type="text" name="username" required placeholder="e.g. john2025" 
